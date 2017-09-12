@@ -443,6 +443,23 @@ void ExecuteAnalyzeRange(const PtrVector<ParseString> &arguments,
         mutable_stat->setMaxValue(attr_id, results[1]);
       }
 
+      // Get the number of tuples for the relation.
+      std::string query_string = "SELECT COUNT(*) FROM \"";
+      query_string.append(rel_name);
+      query_string.append("\";");
+
+      TypedValue num_tuples =
+          ExecuteQueryForSingleResult(main_thread_client_id,
+                                      foreman_client_id,
+                                      query_string,
+                                      bus,
+                                      storage_manager,
+                                      query_processor,
+                                      parser_wrapper.get());
+
+      DCHECK_EQ(TypeID::kLong, num_tuples.getTypeID());
+      mutable_stat->setNumTuples(num_tuples.getLiteral<std::int64_t>());
+
       mutable_stat->setExactness(true);
     }
     fprintf(out, "done\n");
