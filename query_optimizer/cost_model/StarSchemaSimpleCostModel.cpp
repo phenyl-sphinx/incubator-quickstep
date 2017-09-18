@@ -711,7 +711,7 @@ bool StarSchemaSimpleCostModel::canUseTwoPhaseCompactKeyAggregation(
   // to put that flag so that it can be shared by the two cpp files (optimizer
   // vs backend). So here we hardcode the threshold and leave it to be solved
   // later.
-  if (estimated_num_groups >= 10000u) {
+  if (estimated_num_groups >= 100u) {
     return false;
   }
 

@@ -164,8 +164,7 @@ class ColumnVectorsValueAccessor : public ValueAccessor {
     DCHECK(tupleIdInRange(tid));
     if (column_native_[attr_id]) {
       return static_cast<const NativeColumnVector&>(*columns_[attr_id])
-          .getTypedValue(tid)
-          .makeReferenceToThis();
+          .getTypedValue(tid);
     } else {
       return static_cast<const IndirectColumnVector&>(*columns_[attr_id])
           .getTypedValue(tid)
