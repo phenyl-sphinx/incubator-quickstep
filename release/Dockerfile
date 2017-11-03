@@ -1,66 +1,49 @@
 FROM ubuntu:16.04
-MAINTAINER Marc <spehlmann@wisc.edu>
+
+# Make the "en_US.UTF-8" locale so postgres will be utf-8 enabled by default.
+RUN apt-get update && apt-get install -y apt-utils locales && rm -rf /var/lib/apt/lists/* && \
+    localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
+ENV LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8
 
 ENV LLVM_VERSION=3.8
-ENV CONTAINER_USER="cxxdev"
-
-RUN locale-gen en_GB.UTF-8
-ENV LANG=en_GB.UTF-8 \
-    LANGUAGE=en_GB:en \
-    LC_ALL=en_GB.UTF-8
-
-ENV DEBIAN_FRONTEND noninteractive
-
-RUN apt-get update && apt-get -y upgrade && apt-get -y install sudo wget apt-utils
-RUN wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key | sudo apt-key add -
-RUN echo "deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-${LLVM_VERSION} main" >> /etc/apt/sources.list.d/llvm.list
-RUN apt-get update && apt-get -y upgrade
-
-RUN apt-get -y install \
-  aptitude \
-  bash-completion \
-  bison \
-  build-essential \
-  clang++-${LLVM_VERSION} \
-  clang-${LLVM_VERSION} \
-  cmake \
-  coreutils \
-  curl \
-  flex \
-  g++ \
-  gcc \
-  gdb \
-  git-core \
-  htop \
-  iwyu \
-  libprotobuf-dev \
-  lldb-${LLVM_VERSION} \
-  ninja-build \
-  protobuf-compiler \
-  python \
-  python-dev \
-  python-pip \
-  python-software-properties \
-  software-properties-common \
-  subversion \
-  tmux \
-  tree \
-  unzip \
-  vim
-
-# creates gpg directories
-RUN gpg --version
+RUN apt-get update && \
+    apt-get -y install \
+        autoconf \
+        bison \
+        build-essential \
+        clang++-${LLVM_VERSION} \
+        clang-${LLVM_VERSION} \
+        cmake \
+        curl \
+        flex \
+        git-core \
+        libtool \
+        software-properties-common
 
 RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${LLVM_VERSION} 100
 RUN update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${LLVM_VERSION} 100
-RUN update-alternatives --install /usr/bin/lldb lldb /usr/bin/lldb-${LLVM_VERSION} 100
 
-# Add non-root user for container but give it sudo access.
-# Password is the same as the username
-RUN useradd -m ${CONTAINER_USER} && \
-    echo ${CONTAINER_USER}:${CONTAINER_USER} | chpasswd && \
-    cp /etc/sudoers /etc/sudoers.bak && \
-    echo "${CONTAINER_USER}  ALL=(root) ALL" >> /etc/sudoers
-# Make bash the default shell (useful for when using tmux in the container)
+ENV MAKEFLAGS='-j$(nproc)'
+
+# Install protobuf 3 and grpc.
+RUN git clone -b $(curl -L https://grpc.io/release) https://github.com/grpc/grpc && \
+    cd grpc && git submodule update --init && make && make install && \
+    cd third_party/protobuf && make install
+RUN rm -rf grpc
+
+RUN git clone https://github.com/apache/incubator-quickstep.git quickstep
+RUN cd quickstep/third_party && ./download_and_patch_prerequisites.sh
+RUN cd quickstep/build && cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_NETWORK_CLI=On \
+        -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ .. && \
+    make quickstep_cli_shell quickstep_client && \
+    cp   quickstep_cli_shell quickstep_client /usr/local/bin
+RUN rm -rf quickstep
+
+# Add non-root user for container.
+ENV CONTAINER_USER="quickstep"
+RUN useradd -m ${CONTAINER_USER}
+# Make bash the default shell (useful for when using tmux in the container).
 RUN chsh --shell /bin/bash ${CONTAINER_USER}
 USER ${CONTAINER_USER}
