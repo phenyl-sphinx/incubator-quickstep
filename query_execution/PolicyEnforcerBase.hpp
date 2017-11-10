@@ -154,7 +154,7 @@ class PolicyEnforcerBase {
   virtual bool admitQuery(QueryHandle *query_handle) = 0;
 
  protected:
-  static constexpr std::size_t kMaxConcurrentQueries = 1;
+  static constexpr std::size_t kMaxConcurrentQueries = 1000;
 
   /**
    * @brief Add custom actions upon the completion of a query.

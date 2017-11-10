@@ -1,0 +1,2 @@
+COPY c FROM 'test.csv' WITH (DELIMITER '|');
+\dt

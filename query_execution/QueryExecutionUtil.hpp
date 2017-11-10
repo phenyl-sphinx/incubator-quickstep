@@ -134,7 +134,7 @@ class QueryExecutionUtil {
   static tmb::MessageBus::SendStatus ConstructAndSendAdmitRequestMessage(
       const tmb::client_id sender_id,
       const tmb::client_id receiver_id,
-      QueryHandle *query_handle,
+      std::vector<QueryHandle*> query_handle,
       tmb::MessageBus *bus) {
     std::unique_ptr<AdmitRequestMessage> request_message(
         new AdmitRequestMessage(query_handle));

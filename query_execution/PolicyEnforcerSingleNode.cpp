@@ -53,7 +53,7 @@ void PolicyEnforcerSingleNode::getWorkerMessages(
   // works well when multiple queries are getting executed.
   std::size_t per_query_share = 0;
   if (!admitted_queries_.empty()) {
-    per_query_share = FLAGS_max_msgs_per_dispatch_round / admitted_queries_.size();
+    per_query_share = 1000.0/admitted_queries_.size();//FLAGS_max_msgs_per_dispatch_round / admitted_queries_.size();
   } else {
     LOG(WARNING) << "Requesting WorkerMessages when no query is running";
     return;

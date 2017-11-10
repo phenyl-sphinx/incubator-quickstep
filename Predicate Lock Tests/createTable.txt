@@ -1,0 +1,4 @@
+CREATE TABLE b (a int, b int);
+CREATE TABLE t (a int);
+CREATE TABLE c (a int, b int);
+\dt

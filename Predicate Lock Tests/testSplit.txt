@@ -1,0 +1,9 @@
+UPDATE c SET a=1;
+\dt
+SELECT COUNT(*) FROM c WHERE a=1;
+\dt
+SELECT COUNT(*) FROM c WHERE a=1;
+UPDATE c SET a=2;
+\dt
+SELECT COUNT(*) FROM c WHERE a=1;
+\dt

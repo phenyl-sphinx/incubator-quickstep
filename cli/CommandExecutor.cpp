@@ -94,18 +94,20 @@ inline std::vector<TypedValue> ExecuteQueryForSingleRow(
 
   {
     // Generate the query plan.
-    auto query_handle =
-        std::make_unique<QueryHandle>(query_processor->query_id(),
+    QueryHandle query_handle(query_processor->query_id(),
                                       main_thread_client_id,
                                       statement.getPriority());
-    query_processor->generateQueryHandle(statement, query_handle.get());
-    DCHECK(query_handle->getQueryPlanMutable() != nullptr);
-    query_result_relation = query_handle->getQueryResultRelation();
-    DCHECK(query_result_relation != nullptr);
-
+    query_processor->generateQueryHandle(statement, &query_handle);
+    //DCHECK(query_handle->getQueryPlanMutable() != nullptr);
+    query_result_relation = query_handle.getQueryResultRelation();
+   // DCHECK(query_result_relation != nullptr);
+    
+    std::vector<QueryHandle*> query_handles;
+    query_handles.push_back(&query_handle);
+    
     // Use foreman to execute the query plan.
     QueryExecutionUtil::ConstructAndSendAdmitRequestMessage(
-        main_thread_client_id, foreman_client_id, query_handle.release(), bus);
+        main_thread_client_id, foreman_client_id, query_handles, bus);
   }
 
   QueryExecutionUtil::ReceiveQueryCompletionMessage(main_thread_client_id, bus);
