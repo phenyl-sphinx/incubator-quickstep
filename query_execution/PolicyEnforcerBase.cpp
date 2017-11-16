@@ -138,12 +138,16 @@ void PolicyEnforcerBase::processMessage(const TaggedMessage &tagged_message) {
     onQueryCompletion(admitted_queries_[query_id].get());
 
     removeQuery(query_id);
-    if (!waiting_queries_.empty()) {
+    bool query_admitted(false);
+    while (!query_admitted && !waiting_queries_.empty()) {
       // Admit the earliest waiting query.
       QueryHandle *new_query = waiting_queries_.front();
       waiting_queries_.pop();
-      admitQuery(new_query);
-    }
+      query_admitted=admitQuery(new_query);
+      if(!query_admitted) {
+        waiting_queries_.push(new_query);
+      }
+    } //TODO: this really shouldn't push to the back, it should instead maintain order and pull queries out of the middle.
   }
 }
 
@@ -163,6 +167,7 @@ bool PolicyEnforcerBase::admitQueries(
   //query_handle -> query_plan -> dag_operators->nodes->payload->predicate_index
   //query_handle ->query_context_proto -> predicates_
   
+  //TODO: Move this all to a static function of PredicateLock that takes &lock_ and query_handles
   for (QueryHandle *curr_query : query_handles) {
     std::vector<transaction::RangePredicate> lockPredicates;
     
@@ -189,7 +194,7 @@ bool PolicyEnforcerBase::admitQueries(
 
               transaction::RangePredicate lockPredicate(t,&s,&s,transaction::RangePredicate::Inclusive);
               lockPredicates.push_back(lockPredicate);
-            }//TODO attribute on right
+            }//TODO attribute on right and attribute-to-attribute
           }
           //TODO rest of comparisons
           break;
@@ -203,12 +208,11 @@ bool PolicyEnforcerBase::admitQueries(
     }
     
     locks_.insert(std::pair<QueryHandle*, std::vector<transaction::RangePredicate>> (curr_query,lockPredicates));
-    
   }
   
   bool all_queries_admitted = true;
   for (QueryHandle *curr_query : query_handles) {
-    if (all_queries_admitted) {
+    if (all_queries_admitted) { //TODO: Check against predicate locks in the locks_ table.
       all_queries_admitted = admitQuery(curr_query);
     } else {
       waiting_queries_.push(curr_query);
