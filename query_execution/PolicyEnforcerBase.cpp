@@ -203,8 +203,10 @@ bool PolicyEnforcerBase::admitQueries(
          // break;
           //TODO rest of predicate types
         //default:
+          
         //  break;
       }
+      //TODO: loop over selection and for every attribute touched check if we already have a predicate for that relation+attribute.  If not, add an ANY lock.
     }
     
     locks_.insert(std::pair<QueryHandle*, std::vector<transaction::RangePredicate>> (curr_query,lockPredicates));
