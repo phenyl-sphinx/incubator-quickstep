@@ -28,7 +28,10 @@
 #include "catalog/CatalogDatabase.hpp"
 #include "catalog/CatalogRelation.hpp"
 #include "catalog/PartitionScheme.hpp"
+
 #include "transaction/RangePredicate.hpp"
+#include "transaction/PredicateLock.hpp"
+
 #include "query_execution/QueryExecutionMessages.pb.h"
 #include "query_execution/QueryExecutionState.hpp"
 #include "query_execution/QueryExecutionTypedefs.hpp"
@@ -169,7 +172,7 @@ bool PolicyEnforcerBase::admitQueries(
   
   //TODO: Move this all to a static function of PredicateLock that takes &lock_ and query_handles
   for (QueryHandle *curr_query : query_handles) {
-    std::vector<transaction::RangePredicate> lockPredicates;
+    transaction::PredicateLock lockPredicates;
     
     serialization::QueryContext* query_cont=curr_query->getQueryContextProtoMutable();
     int predicateCount = query_cont->predicates_size();
@@ -193,7 +196,7 @@ bool PolicyEnforcerBase::admitQueries(
               const Type* t = &TypeFactory::ReconstructFromProto(rightType);
 
               transaction::RangePredicate lockPredicate(t,&s,&s,transaction::RangePredicate::Inclusive);
-              lockPredicates.push_back(lockPredicate);
+              lockPredicates.addPredicateRead(&lockPredicate);
             }//TODO attribute on right and attribute-to-attribute
           }
           //TODO rest of comparisons
@@ -209,7 +212,7 @@ bool PolicyEnforcerBase::admitQueries(
       //TODO: loop over selection and for every attribute touched check if we already have a predicate for that relation+attribute.  If not, add an ANY lock.
     }
     
-    locks_.insert(std::pair<QueryHandle*, std::vector<transaction::RangePredicate>> (curr_query,lockPredicates));
+    locks_.insert(std::pair<QueryHandle*, transaction::PredicateLock> (curr_query,lockPredicates));
   }
   
   bool all_queries_admitted = true;

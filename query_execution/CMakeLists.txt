@@ -155,6 +155,7 @@ target_link_libraries(quickstep_queryexecution_PolicyEnforcerBase
                       quickstep_storage_StorageBlockInfo
                       quickstep_utility_Macros
                       quickstep_transaction_RangePredicate
+                      quickstep_transaction_PredicateLock
                       tmb
                       ${GFLAGS_LIB_NAME})
 if (ENABLE_DISTRIBUTED)

@@ -17,8 +17,8 @@
  * under the License.
  **/
 
-#ifndef QUICKSTEP_TRANSACTION_RANGE_PREDICATE_HPP_
-#define QUICKSTEP_TRANSACTION_RANGE_PREDICATE_HPP_
+#ifndef QUICKSTEP_TRANSACTION_PREDICATE_LOCK_HPP_
+#define QUICKSTEP_TRANSACTION_PREDICATE_LOCK_HPP_
 
 #include <memory>
 #include <unordered_set>
@@ -41,12 +41,14 @@ namespace transaction {
 class PredicateLock
 {
 private:
-  const std::vector<Predicate*> predicates;
+  std::vector<transaction::Predicate*> read_predicates;
+  std::vector<transaction::Predicate*> write_predicates;
 
 public:
   PredicateLock();
   bool intersect(const PredicateLock& lock) const;
-  bool addPredicate(Predicate* predicate) const;
+  bool addPredicateWrite(transaction::Predicate* predicate) ;
+  bool addPredicateRead(transaction::Predicate* predicate) ;
 };
 
 }

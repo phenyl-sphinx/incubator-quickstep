@@ -42,22 +42,35 @@
 
 namespace quickstep {
 namespace transaction {
-
-PredicateLock::~PredicateLock(){}
+  
+  PredicateLock::PredicateLock(){}
 
 bool PredicateLock::intersect(const PredicateLock& lock) const{
-  for(Predicate thisPredicate: pedicates){
-    for(Predicate thatPredicate: lock.predicates){
-      if(thisPredicate.intersect(thatPredicate))
+  for(transaction::Predicate *thisPredicate: read_predicates){
+    for(transaction::Predicate *thatPredicate: lock.read_predicates){
+      if(thisPredicate->intersect(*thatPredicate))
+      {
+        return true;
+      }
+    }
+    for(transaction::Predicate *thatPredicate: lock.write_predicates){
+      if(thisPredicate->intersect(*thatPredicate))
       {
         return true;
       }
     }
   }
+  return false;
 }
   
-bool PredicateLock::addPredicate(quickstep::transaction::Predicate *predicate) const{
-  predicates.push_back(predicate);
+bool PredicateLock::addPredicateWrite(transaction::Predicate* predicate) {
+  write_predicates.push_back(predicate);
+  return true;
+}
+  
+bool PredicateLock::addPredicateRead(transaction::Predicate* predicate) {
+  read_predicates.push_back(predicate);
+  return true;
 }
 
 }  // namespace transaction

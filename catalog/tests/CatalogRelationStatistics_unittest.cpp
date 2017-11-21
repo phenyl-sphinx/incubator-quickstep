@@ -124,13 +124,13 @@ class CatalogRelationStatisticsTest : public ::testing::Test {
                                       statement.getPriority());
     query_processor_->generateQueryHandle(statement, query_handle.get());
 
-    QueryExecutionUtil::ConstructAndSendAdmitRequestMessage(
+    /*QueryExecutionUtil::ConstructAndSendAdmitRequestMessage(
         main_thread_client_id_,
         foreman_->getBusClientID(),
         query_handle.release(),
         &bus_);
 
-    QueryExecutionUtil::ReceiveQueryCompletionMessage(main_thread_client_id_, &bus_);
+    QueryExecutionUtil::ReceiveQueryCompletionMessage(main_thread_client_id_, &bus_);*/
   }
 
   void executeAnalyze(const std::string &rel_name) {

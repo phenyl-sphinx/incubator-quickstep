@@ -27,6 +27,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "transaction/PredicateLock.hpp"
 #include "transaction/RangePredicate.hpp"
 
 #include "query_execution/QueryExecutionTypedefs.hpp"
@@ -186,7 +187,7 @@ class PolicyEnforcerBase {
   // The queries which haven't been admitted yet.
   std::queue<QueryHandle*> waiting_queries_;
   
-  std::map<QueryHandle*, std::vector<transaction::RangePredicate>> locks_;
+  std::map<QueryHandle*, transaction::PredicateLock> locks_;
 
   WorkOrderTimeRecorder workorder_time_recorder_;
 
