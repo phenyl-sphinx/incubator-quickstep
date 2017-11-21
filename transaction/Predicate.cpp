@@ -89,10 +89,10 @@ std::vector<std::shared_ptr<Predicate>> Predicate::breakdownHelper(serialization
           const serialization::Type rightType = right.GetExtension(serialization::ScalarLiteral::literal_type);
           TypedValue s;
           s=s.ReconstructFromProto(rightValue);
-          const Type* t = &TypeFactory::ReconstructFromProto(rightType);
+          const Type& t = TypeFactory::ReconstructFromProto(rightType);
 
           std::shared_ptr<Predicate> eqPredicate = std::make_shared<EqualityPredicate>(left.GetExtension(serialization::ScalarAttribute::relation_id),
-            left.GetExtension(serialization::ScalarAttribute::attribute_id), t, &s);
+            left.GetExtension(serialization::ScalarAttribute::attribute_id), t, s);
           ret.push_back(eqPredicate);
         }
         else if(left.data_source()==left.LITERAL && right.data_source()==right.ATTRIBUTE){
@@ -100,10 +100,10 @@ std::vector<std::shared_ptr<Predicate>> Predicate::breakdownHelper(serialization
           const serialization::Type leftType = left.GetExtension(serialization::ScalarLiteral::literal_type);
           TypedValue s;
           s=s.ReconstructFromProto(leftValue);
-          const Type* t = &TypeFactory::ReconstructFromProto(leftType);
+          const Type& t = TypeFactory::ReconstructFromProto(leftType);
 
           std::shared_ptr<Predicate> eqPredicate = std::make_shared<EqualityPredicate>(right.GetExtension(serialization::ScalarAttribute::relation_id),
-            right.GetExtension(serialization::ScalarAttribute::attribute_id), t, &s);
+            right.GetExtension(serialization::ScalarAttribute::attribute_id), t, s);
           ret.push_back(eqPredicate);
         }
         else{

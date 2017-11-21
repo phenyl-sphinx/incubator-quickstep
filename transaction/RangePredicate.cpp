@@ -45,11 +45,10 @@ namespace quickstep {
 namespace transaction {
 
 RangePredicate::RangePredicate(relation_id rel_id, attribute_id attr_id,
-  const Type* targetType,
-  const TypedValue* smallValue,
-  const TypedValue* largeValue,
+  const Type& targetType,
+  const TypedValue targetValue,
   RangeType rangeType):
-Predicate(rel_id, attr_id), rangeType(rangeType), targetType(targetType), smallValue(smallValue), largeValue(largeValue)
+Predicate(rel_id, attr_id), rangeType(rangeType), targetType(targetType), targetValue(targetValue)
 {
   type = Range;
 
@@ -69,25 +68,10 @@ bool RangePredicate::intersect(const Predicate& predicate) const{
   switch(predicate.type){
     case Equality: {
       const EqualityPredicate& eqPredicate = dynamic_cast<const EqualityPredicate &>(predicate);
-      if(targetType->getTypeID() != eqPredicate.targetType->getTypeID()){
+      if(targetType.getTypeID() != eqPredicate.targetType.getTypeID()){
         return false; // TODO: throw proper exception here
       }
-      if(rangeType == Inclusive){
-        return greaterThanEqComp->compareTypedValuesChecked(*eqPredicate.targetValue, *eqPredicate.targetType, *smallValue, *targetType)
-          && lessThanEqComp->compareTypedValuesChecked(*eqPredicate.targetValue, *eqPredicate.targetType, *largeValue, *targetType);
-      }
-      else if(rangeType == NonInclusive){
-        return greaterThanComp->compareTypedValuesChecked(*eqPredicate.targetValue, *eqPredicate.targetType, *smallValue, *targetType)
-          && lessThanComp->compareTypedValuesChecked(*eqPredicate.targetValue, *eqPredicate.targetType, *largeValue, *targetType);
-      }
-      else if(rangeType == LeftInclusive){
-        return greaterThanEqComp->compareTypedValuesChecked(*eqPredicate.targetValue, *eqPredicate.targetType, *smallValue, *targetType)
-          && lessThanComp->compareTypedValuesChecked(*eqPredicate.targetValue, *eqPredicate.targetType, *largeValue, *targetType);
-      }
-      else {  // right inclusive
-        return greaterThanComp->compareTypedValuesChecked(*eqPredicate.targetValue, *eqPredicate.targetType, *smallValue, *targetType)
-          && lessThanEqComp->compareTypedValuesChecked(*eqPredicate.targetValue, *eqPredicate.targetType, *largeValue, *targetType);
-      }
+      return true;
     }
     case Range: {
       return false;

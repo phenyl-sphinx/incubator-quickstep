@@ -138,19 +138,39 @@ void PolicyEnforcerBase::processMessage(const TaggedMessage &tagged_message) {
   }
   if (admitted_queries_[query_id]->queryStatus(op_index) ==
           QueryManagerBase::QueryStatusCode::kQueryExecuted) {
-    onQueryCompletion(admitted_queries_[query_id].get());
+
+    auto base_ptr = admitted_queries_[query_id].get();
+    const QueryHandle* completed_query = base_ptr->query_handle();
+    running_queries_.erase(running_queries_.find(completed_query));
+
+    onQueryCompletion(base_ptr);
 
     removeQuery(query_id);
     bool query_admitted(false);
-    while (!query_admitted && !waiting_queries_.empty()) {
+    while ( !waiting_queries_.empty()) {
       // Admit the earliest waiting query.
       QueryHandle *new_query = waiting_queries_.front();
-      waiting_queries_.pop();
-      query_admitted=admitQuery(new_query);
-      if(!query_admitted) {
-        waiting_queries_.push(new_query);
+
+      bool doesIntersect = false;
+      for(auto running_query : running_queries_){
+        if(locks_[running_query].intersect(locks_[new_query])){
+          doesIntersect = true;
+          break;
+        }
       }
-    } //TODO: this really shouldn't push to the back, it should instead maintain order and pull queries out of the middle.
+
+      if(!doesIntersect){
+        query_admitted=admitQuery(new_query);
+        if(query_admitted) {
+          LOG_WARNING("Waiting query got admitted");
+          running_queries_.insert(new_query);
+          waiting_queries_.pop();
+        }
+      }
+      else{
+        break;
+      }
+    }
   }
 }
 
@@ -166,6 +186,9 @@ void PolicyEnforcerBase::removeQuery(const std::size_t query_id) {
 bool PolicyEnforcerBase::admitQueries(
     const std::vector<QueryHandle*> &query_handles) {
   DCHECK(!query_handles.empty());
+
+  bool all_queries_admitted = true;
+
 
   //query_handle -> query_plan -> dag_operators->nodes->payload->predicate_index
   //query_handle ->query_context_proto -> predicates_
@@ -186,17 +209,35 @@ bool PolicyEnforcerBase::admitQueries(
       //TODO: loop over selection and for every attribute touched check if we already have a predicate for that relation+attribute.  If not, add an ANY lock.
     }
 
+    // insert the pair into the map
     locks_.insert(std::pair<QueryHandle*, transaction::PredicateLock> (curr_query,lockPredicates));
-  }
 
-  bool all_queries_admitted = true;
-  for (QueryHandle *curr_query : query_handles) {
-    if (all_queries_admitted) { //TODO: Check against predicate locks in the locks_ table.
-      all_queries_admitted = admitQuery(curr_query);
-    } else {
+    // Only admit query if no conflicts are found
+    bool doesIntersect = false;
+    for(auto running_query : running_queries_){
+      if(locks_[running_query].intersect(lockPredicates)){
+        doesIntersect = true;
+        break;
+      }
+    }
+    if(!doesIntersect){
+      bool query_admitted=admitQuery(curr_query);
+      if(!query_admitted){
+        all_queries_admitted = false;
+        waiting_queries_.push(curr_query);
+      }
+      else{
+        running_queries_.insert(curr_query);
+        LOG_WARNING("Query Admitted!");
+      }
+    }
+    else{
+      all_queries_admitted = false;
       waiting_queries_.push(curr_query);
+      LOG_WARNING("Query Conflicted!");
     }
   }
+
   return all_queries_admitted;
 }
 

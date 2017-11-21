@@ -101,7 +101,7 @@ void CommandExecutorTestRunner::runTestCase(
             query_result_relation = query_handle->getQueryResultRelation();
 
             QueryExecutionUtil::ConstructAndSendAdmitRequestMessage(
-                main_thread_client_id_, foreman_->getBusClientID(), query_handle.release(), &bus_);
+                main_thread_client_id_, foreman_->getBusClientID(),   std::vector<QueryHandle *>({query_handle.release()}), &bus_);
           }
 
           // Receive workload completion message from Foreman.

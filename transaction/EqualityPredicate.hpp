@@ -43,9 +43,9 @@ private:
   const EqualComparison* eqComp;
 
 public:
-  const Type *targetType;
-  const TypedValue *targetValue;
-  EqualityPredicate(relation_id rel_id, attribute_id attr_id, const Type* targetType, const TypedValue* targetValue);
+  const Type& targetType;
+  const TypedValue targetValue;
+  EqualityPredicate(relation_id rel_id, attribute_id attr_id, const Type& targetType, const TypedValue targetValue);
   ~EqualityPredicate();
   bool intersect(const Predicate& predicate) const override;
 };

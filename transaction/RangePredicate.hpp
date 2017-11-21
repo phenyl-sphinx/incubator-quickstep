@@ -40,6 +40,7 @@
 namespace quickstep {
 namespace transaction {
 
+// TODO: Change this to single sided!
 class RangePredicate : public Predicate
 {
 private:
@@ -52,16 +53,15 @@ private:
 
 public:
   enum RangeType {
-    Inclusive,
-    NonInclusive,
-    LeftInclusive,
-    RightInclusive
+    LargerThan,
+    LargerEqTo,
+    SmallerThan,
+    SmallerEqTo
   };
   const RangeType rangeType;
-  const Type *targetType;
-  const TypedValue *smallValue;
-  const TypedValue *largeValue;
-  RangePredicate(relation_id rel_id, attribute_id attr_id, const Type* targetType, const TypedValue* smallValue, const TypedValue* largeValue, RangeType rangeType);
+  const Type& targetType;
+  const TypedValue targetValue;
+  RangePredicate(relation_id rel_id, attribute_id attr_id, const Type& targetType, const TypedValue targetValue, RangeType rangeType);
   ~RangePredicate();
   bool intersect(const Predicate& predicate) const override;
 };

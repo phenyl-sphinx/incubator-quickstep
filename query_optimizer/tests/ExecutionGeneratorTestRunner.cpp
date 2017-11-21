@@ -90,7 +90,7 @@ void ExecutionGeneratorTestRunner::runTestCase(
         QueryExecutionUtil::ConstructAndSendAdmitRequestMessage(
             main_thread_client_id_,
             foreman_->getBusClientID(),
-            query_handle.release(),
+            std::vector<QueryHandle *>({query_handle.release()}),
             &bus_);
       } catch (const SqlError &error) {
         *output = error.formatMessage(input);

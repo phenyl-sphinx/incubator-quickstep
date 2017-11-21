@@ -184,10 +184,12 @@ class PolicyEnforcerBase {
   // Key = query ID, value = QueryManagerBase* for the key query.
   std::unordered_map<std::size_t, std::unique_ptr<QueryManagerBase>> admitted_queries_;
 
+  // The queries which are currently running.
+  std::unordered_set<const QueryHandle*> running_queries_;
   // The queries which haven't been admitted yet.
   std::queue<QueryHandle*> waiting_queries_;
-  
-  std::map<QueryHandle*, transaction::PredicateLock> locks_;
+
+  std::unordered_map<const QueryHandle*, transaction::PredicateLock> locks_;
 
   WorkOrderTimeRecorder workorder_time_recorder_;
 
