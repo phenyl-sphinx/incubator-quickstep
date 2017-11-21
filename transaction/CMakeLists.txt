@@ -53,6 +53,9 @@ add_library(quickstep_transaction_Transaction
 add_library(quickstep_transaction_TransactionTable
             TransactionTable.cpp
             TransactionTable.hpp)
+add_library(quickstep_transaction_Predicate
+            Predicate.cpp
+            Predicate.hpp)          
 add_library(quickstep_transaction_EqualityPredicate
             EqualityPredicate.cpp
             EqualityPredicate.hpp)
