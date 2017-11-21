@@ -17,51 +17,41 @@
  * under the License.
  **/
 
-#ifndef QUICKSTEP_TRANSACTION_PREDICATE_HPP_
-#define QUICKSTEP_TRANSACTION_PREDICATE_HPP_
+#include "transaction/CycleDetector.hpp"
 
+#include <cstdint>
 #include <memory>
+#include <stack>
+#include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "transaction/Predicate.hpp"
-
-#include "catalog/CatalogDatabase.hpp"
-#include "catalog/CatalogRelation.hpp"
-#include "catalog/PartitionScheme.hpp"
-#include "query_execution/QueryExecutionMessages.pb.h"
-#include "query_execution/QueryExecutionState.hpp"
-#include "query_execution/QueryExecutionTypedefs.hpp"
-#include "query_execution/QueryManagerBase.hpp"
+#include "transaction/AnyPredicate.hpp"
+#include "types/TypeID.hpp"
+#include "types/TypedValue.hpp"
+#include "types/IntType.hpp"
+#include "types/LongType.hpp"
+#include "types/FloatType.hpp"
 
 namespace quickstep {
 namespace transaction {
 
-class Predicate
+AnyPredicate::AnyPredicate(relation_id rel_id, attribute_id attr_id):
+Predicate(rel_id, attr_id)
 {
-private:
-
-
-  static std::vector<std::shared_ptr<Predicate>> breakdownHelper(serialization::Predicate& predicate);
-
-public:
-  enum PredicateType
-  {
-    Equality,
-    Range
-  };
-  relation_id rel_id;
-  attribute_id attr_id;
-  PredicateType type;
-
-
-  static std::vector<std::shared_ptr<Predicate>> breakdown(serialization::Predicate& predicate);
-  Predicate(relation_id rel_id, attribute_id attr_id);
-  virtual ~Predicate(){};
-  virtual bool intersect(const Predicate& predicate) const = 0;
-};
-
-}
 }
 
-#endif
+AnyPredicate::~AnyPredicate(){
+}
+
+bool AnyPredicate::intersect(const Predicate& predicate) const{
+  if(predicate.rel_id != rel_id || predicate.attr_id != attr_id)
+    return false;
+
+  return true;
+}
+
+}  // namespace transaction
+}  // namespace quickstep

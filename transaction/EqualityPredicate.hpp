@@ -24,6 +24,9 @@
 #include <unordered_set>
 #include <vector>
 #include "transaction/Predicate.hpp"
+#include "transaction/AnyPredicate.hpp"
+#include "transaction/EqualityPredicate.hpp"
+#include "transaction/RangePredicate.hpp"
 #include "types/Type.hpp"
 #include "types/TypeID.hpp"
 #include "types/TypedValue.hpp"
@@ -42,7 +45,7 @@ private:
 public:
   const Type *targetType;
   const TypedValue *targetValue;
-  EqualityPredicate(const Type* targetType, const TypedValue* targetValue);
+  EqualityPredicate(relation_id rel_id, attribute_id attr_id, const Type* targetType, const TypedValue* targetValue);
   ~EqualityPredicate();
   bool intersect(const Predicate& predicate) const override;
 };

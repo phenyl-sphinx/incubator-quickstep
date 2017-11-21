@@ -300,7 +300,7 @@ int main(int argc, char* argv[]) {
   std::chrono::time_point<std::chrono::steady_clock> start, end;
 
   std::vector<QueryHandle*> queries;
-  
+
 #ifdef QUICKSTEP_ENABLE_GOOGLE_PROFILER
   bool started_profiling = false;
 #endif
@@ -324,7 +324,7 @@ int main(int argc, char* argv[]) {
     parser_wrapper->feedNextBuffer(command_string);
 
     bool quitting = false;
-    
+
     // A parse error should reset the parser. This is because the thrown quickstep
     // SqlError does not do the proper reset work of the YYABORT macro.
     bool reset_parser = false;
@@ -338,11 +338,11 @@ int main(int argc, char* argv[]) {
         } else if (statement.getStatementType() == ParseStatement::kCommand) {
           try {
             if(queries.size()>0){
-              
+
                std::vector<const CatalogRelation*> query_result_relations;
                 for(auto&& query_handle : queries){
                   start = std::chrono::steady_clock::now();
-                  
+
                   const CatalogRelation* cR = (query_handle->getQueryResultRelation());
                   query_result_relations.push_back(cR);
                 }
@@ -351,8 +351,8 @@ int main(int argc, char* argv[]) {
                                                                                     queries,
                                                                                                              &bus);
                 (void)status;
-              
-              
+
+
                 //for(int i=0; i<query_result_relations.size();i++){
                   try {
                     QueryExecutionUtil::ReceiveQueryCompletionMessage(
@@ -363,7 +363,7 @@ int main(int argc, char* argv[]) {
                     break;
                   }
                 //}
-              
+
                 for(auto&& query_result_relation : query_result_relations){
                     if (query_result_relation) {
                       PrintToScreen::PrintRelation(*query_result_relation,
@@ -373,13 +373,13 @@ int main(int argc, char* argv[]) {
                                                      *query_result_relation,
                                                      &storage_manager,
                                                      io_handle->err());
-                      
+
                       DropRelation::Drop(*query_result_relation,
                                          query_processor->getDefaultDatabase(),
                                          &storage_manager);
                     }
-                  
-                  
+
+
 
                 }
               if (quickstep::FLAGS_display_timing) {
@@ -389,9 +389,9 @@ int main(int argc, char* argv[]) {
                                                                        time_ms.count(), 3).c_str());
               }
               query_processor->saveCatalog();
-              
+
                 queries.clear();
-              sleep(.2);
+              usleep(200000);
             }
             quickstep::cli::executeCommand(
                 statement,
@@ -412,7 +412,7 @@ int main(int argc, char* argv[]) {
         }
         // Here the statement is presumed to be a query.
         const std::size_t query_id = query_processor->query_id();
-       
+
 
         try {
           QueryHandle* query_handle = new QueryHandle(query_id, main_thread_client_id, statement.getPriority());
@@ -420,10 +420,10 @@ int main(int argc, char* argv[]) {
           DCHECK(query_handle->getQueryPlanMutable() != nullptr);
 
           queries.push_back(query_handle);
-          
 
-          
-          
+
+
+
         } catch (const quickstep::SqlError &sql_error) {
           fprintf(io_handle->err(), "%s", sql_error.formatMessage(*command_string).c_str());
           reset_parser = true;

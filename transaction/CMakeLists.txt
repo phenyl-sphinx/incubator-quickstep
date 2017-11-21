@@ -55,23 +55,19 @@ add_library(quickstep_transaction_TransactionTable
             TransactionTable.hpp)
 add_library(quickstep_transaction_Predicate
             Predicate.cpp
-            Predicate.hpp)          
-add_library(quickstep_transaction_EqualityPredicate
+            Predicate.hpp
             EqualityPredicate.cpp
-            EqualityPredicate.hpp)
-add_library(quickstep_transaction_RangePredicate
+            EqualityPredicate.hpp
             RangePredicate.cpp
-            RangePredicate.hpp)
+            RangePredicate.hpp
+            AnyPredicate.cpp
+            AnyPredicate.hpp)
 add_library(quickstep_transaction_PredicateLock
             PredicateLock.cpp
             PredicateLock.hpp)
 
-target_link_libraries(quickstep_transaction_RangePredicate
-                      quickstep_transaction_EqualityPredicate)
-
 target_link_libraries(quickstep_transaction_PredicateLock
-                      quickstep_transaction_RangePredicate
-                      quickstep_transaction_EqualityPredicate)
+                      quickstep_transaction_Predicate)
 
 target_link_libraries(quickstep_transaction_CycleDetector
                       quickstep_transaction_DirectedGraph

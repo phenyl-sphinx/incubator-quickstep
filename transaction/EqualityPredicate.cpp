@@ -39,8 +39,8 @@
 namespace quickstep {
 namespace transaction {
 
-EqualityPredicate::EqualityPredicate(const Type* _targetType, const TypedValue* _targetValue):
-targetType(_targetType), targetValue(_targetValue)
+EqualityPredicate::EqualityPredicate(relation_id rel_id, attribute_id attr_id, const Type* _targetType, const TypedValue* _targetValue):
+Predicate(rel_id, attr_id), targetType(_targetType), targetValue(_targetValue)
 {
   type = Equality;
 
@@ -51,6 +51,9 @@ EqualityPredicate::~EqualityPredicate(){
 }
 
 bool EqualityPredicate::intersect(const Predicate& predicate) const{
+  if(predicate.rel_id != rel_id || predicate.attr_id != attr_id)
+    return false;
+    
   switch(predicate.type){
     case Equality: {
       const EqualityPredicate& eqPredicate = dynamic_cast<const EqualityPredicate &>(predicate);

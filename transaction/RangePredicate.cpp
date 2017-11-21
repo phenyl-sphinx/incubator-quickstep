@@ -44,11 +44,12 @@
 namespace quickstep {
 namespace transaction {
 
-RangePredicate::RangePredicate(const Type* targetType,
+RangePredicate::RangePredicate(relation_id rel_id, attribute_id attr_id,
+  const Type* targetType,
   const TypedValue* smallValue,
   const TypedValue* largeValue,
   RangeType rangeType):
-rangeType(rangeType), targetType(targetType), smallValue(smallValue), largeValue(largeValue)
+Predicate(rel_id, attr_id), rangeType(rangeType), targetType(targetType), smallValue(smallValue), largeValue(largeValue)
 {
   type = Range;
 
@@ -62,6 +63,9 @@ RangePredicate::~RangePredicate(){
 }
 
 bool RangePredicate::intersect(const Predicate& predicate) const{
+  if(predicate.rel_id != rel_id || predicate.attr_id != attr_id)
+    return false;
+
   switch(predicate.type){
     case Equality: {
       const EqualityPredicate& eqPredicate = dynamic_cast<const EqualityPredicate &>(predicate);

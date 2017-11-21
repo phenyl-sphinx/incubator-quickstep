@@ -41,14 +41,14 @@ namespace transaction {
 class PredicateLock
 {
 private:
-  std::vector<transaction::Predicate*> read_predicates;
-  std::vector<transaction::Predicate*> write_predicates;
+  std::vector<std::shared_ptr<Predicate>> read_predicates;
+  std::vector<std::shared_ptr<Predicate>> write_predicates;
 
 public:
   PredicateLock();
   bool intersect(const PredicateLock& lock) const;
-  bool addPredicateWrite(transaction::Predicate* predicate) ;
-  bool addPredicateRead(transaction::Predicate* predicate) ;
+  bool addPredicateWrite(std::shared_ptr<Predicate> predicate) ;
+  bool addPredicateRead(std::shared_ptr<Predicate> predicate) ;
 };
 
 }

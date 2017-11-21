@@ -42,18 +42,18 @@
 
 namespace quickstep {
 namespace transaction {
-  
+
   PredicateLock::PredicateLock(){}
 
 bool PredicateLock::intersect(const PredicateLock& lock) const{
-  for(transaction::Predicate *thisPredicate: read_predicates){
-    for(transaction::Predicate *thatPredicate: lock.read_predicates){
+  for(std::shared_ptr<Predicate> thisPredicate: read_predicates){
+    for(std::shared_ptr<Predicate> thatPredicate: lock.read_predicates){
       if(thisPredicate->intersect(*thatPredicate))
       {
         return true;
       }
     }
-    for(transaction::Predicate *thatPredicate: lock.write_predicates){
+    for(std::shared_ptr<Predicate> thatPredicate: lock.write_predicates){
       if(thisPredicate->intersect(*thatPredicate))
       {
         return true;
@@ -62,13 +62,13 @@ bool PredicateLock::intersect(const PredicateLock& lock) const{
   }
   return false;
 }
-  
-bool PredicateLock::addPredicateWrite(transaction::Predicate* predicate) {
+
+bool PredicateLock::addPredicateWrite(std::shared_ptr<Predicate> predicate) {
   write_predicates.push_back(predicate);
   return true;
 }
-  
-bool PredicateLock::addPredicateRead(transaction::Predicate* predicate) {
+
+bool PredicateLock::addPredicateRead(std::shared_ptr<Predicate> predicate) {
   read_predicates.push_back(predicate);
   return true;
 }

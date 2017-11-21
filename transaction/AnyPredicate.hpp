@@ -17,8 +17,8 @@
  * under the License.
  **/
 
-#ifndef QUICKSTEP_TRANSACTION_RANGE_PREDICATE_HPP_
-#define QUICKSTEP_TRANSACTION_RANGE_PREDICATE_HPP_
+#ifndef QUICKSTEP_TRANSACTION_ANY_PREDICATE_HPP_
+#define QUICKSTEP_TRANSACTION_ANY_PREDICATE_HPP_
 
 #include <memory>
 #include <unordered_set>
@@ -31,38 +31,15 @@
 #include "types/TypeID.hpp"
 #include "types/TypedValue.hpp"
 #include "types/operations/comparisons/Comparison.hpp"
-#include "types/operations/comparisons/EqualComparison.hpp"
-#include "types/operations/comparisons/LessComparison.hpp"
-#include "types/operations/comparisons/LessOrEqualComparison.hpp"
-#include "types/operations/comparisons/GreaterComparison.hpp"
-#include "types/operations/comparisons/GreaterOrEqualComparison.hpp"
 
 namespace quickstep {
 namespace transaction {
 
-class RangePredicate : public Predicate
+class AnyPredicate : public Predicate
 {
-private:
-
-  const LessComparison* lessThanComp;
-  const LessOrEqualComparison* lessThanEqComp;
-  const GreaterComparison* greaterThanComp;
-  const GreaterOrEqualComparison* greaterThanEqComp;
-
-
 public:
-  enum RangeType {
-    Inclusive,
-    NonInclusive,
-    LeftInclusive,
-    RightInclusive
-  };
-  const RangeType rangeType;
-  const Type *targetType;
-  const TypedValue *smallValue;
-  const TypedValue *largeValue;
-  RangePredicate(relation_id rel_id, attribute_id attr_id, const Type* targetType, const TypedValue* smallValue, const TypedValue* largeValue, RangeType rangeType);
-  ~RangePredicate();
+  AnyPredicate(relation_id rel_id, attribute_id attr_id);
+  ~AnyPredicate();
   bool intersect(const Predicate& predicate) const override;
 };
 

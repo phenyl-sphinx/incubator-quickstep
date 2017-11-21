@@ -29,7 +29,7 @@
 #include "catalog/CatalogRelation.hpp"
 #include "catalog/PartitionScheme.hpp"
 
-#include "transaction/RangePredicate.hpp"
+#include "transaction/Predicate.hpp"
 #include "transaction/PredicateLock.hpp"
 
 #include "query_execution/QueryExecutionMessages.pb.h"
@@ -166,55 +166,29 @@ void PolicyEnforcerBase::removeQuery(const std::size_t query_id) {
 bool PolicyEnforcerBase::admitQueries(
     const std::vector<QueryHandle*> &query_handles) {
   DCHECK(!query_handles.empty());
-  
+
   //query_handle -> query_plan -> dag_operators->nodes->payload->predicate_index
   //query_handle ->query_context_proto -> predicates_
-  
+
   //TODO: Move this all to a static function of PredicateLock that takes &lock_ and query_handles
   for (QueryHandle *curr_query : query_handles) {
     transaction::PredicateLock lockPredicates;
-    
+
     serialization::QueryContext* query_cont=curr_query->getQueryContextProtoMutable();
     int predicateCount = query_cont->predicates_size();
-    
+
     for(int i=0;i<predicateCount;i++){
       serialization::Predicate predicate = query_cont->predicates(i);
-      int pred_type = predicate.predicate_type();
-      
-      switch (pred_type) {
-        case 2: //Comparison predicate
-          serialization::Scalar right = predicate.GetExtension(serialization::ComparisonPredicate::right_operand);
-          serialization::Scalar left = predicate.GetExtension(serialization::ComparisonPredicate::left_operand);
-          serialization::Comparison comp = predicate.GetExtension(serialization::ComparisonPredicate::comparison);
-          
-          if(comp.comparison_id()==comp.EQUAL) {
-            if(left.data_source()==left.ATTRIBUTE && right.data_source()==right.LITERAL) {
-              const serialization::TypedValue rightValue = right.GetExtension(serialization::ScalarLiteral::literal);
-              const serialization::Type rightType = right.GetExtension(serialization::ScalarLiteral::literal_type);
-              TypedValue s;
-              s=s.ReconstructFromProto(rightValue);
-              const Type* t = &TypeFactory::ReconstructFromProto(rightType);
 
-              transaction::RangePredicate lockPredicate(t,&s,&s,transaction::RangePredicate::Inclusive);
-              lockPredicates.addPredicateRead(&lockPredicate);
-            }//TODO attribute on right and attribute-to-attribute
-          }
-          //TODO rest of comparisons
-          break;
-        //case 4: //Conjunction
-          
-         // break;
-          //TODO rest of predicate types
-        //default:
-          
-        //  break;
+      for( std::shared_ptr<transaction::Predicate> tPred : transaction::Predicate::breakdown(predicate) ){
+        lockPredicates.addPredicateRead(tPred);
       }
       //TODO: loop over selection and for every attribute touched check if we already have a predicate for that relation+attribute.  If not, add an ANY lock.
     }
-    
+
     locks_.insert(std::pair<QueryHandle*, transaction::PredicateLock> (curr_query,lockPredicates));
   }
-  
+
   bool all_queries_admitted = true;
   for (QueryHandle *curr_query : query_handles) {
     if (all_queries_admitted) { //TODO: Check against predicate locks in the locks_ table.
