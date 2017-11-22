@@ -195,6 +195,9 @@ bool PolicyEnforcerBase::admitQueries(
 
   //TODO: Move this all to a static function of PredicateLock that takes &lock_ and query_handles
   for (QueryHandle *curr_query : query_handles) {
+
+    bool isWriteInvolved = (curr_query->getQueryResultRelation() == nullptr);
+
     transaction::PredicateLock lockPredicates;
 
     serialization::QueryContext* query_cont=curr_query->getQueryContextProtoMutable();
@@ -203,7 +206,10 @@ bool PolicyEnforcerBase::admitQueries(
     for(int i=0;i<predicateCount;i++){
       serialization::Predicate predicate = query_cont->predicates(i);
       for( std::shared_ptr<transaction::Predicate> tPred : transaction::Predicate::breakdown(predicate) ){
-        lockPredicates.addPredicateRead(tPred);
+        if(isWriteInvolved)
+          lockPredicates.addPredicateWrite(tPred);
+        else
+          lockPredicates.addPredicateRead(tPred);
       }
       //TODO: loop over selection and for every attribute touched check if we already have a predicate for that relation+attribute.  If not, add an ANY lock.
     }
