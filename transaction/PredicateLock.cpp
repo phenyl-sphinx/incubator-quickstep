@@ -45,7 +45,10 @@
 namespace quickstep {
 namespace transaction {
 
-  PredicateLock::PredicateLock(){}
+PredicateLock::PredicateLock(){
+  iso_level = FullySerializable;
+}
+PredicateLock::PredicateLock(IsolationLevel iso_level):iso_level(iso_level){}
 
 bool PredicateLock::intersect(const PredicateLock& lock) const{
   for(std::shared_ptr<Predicate> thisPredicate: read_predicates){

@@ -83,10 +83,14 @@ std::vector<std::shared_ptr<Predicate>> Predicate::breakdownHelper(serialization
       serialization::Scalar left = predicate.GetExtension(serialization::ComparisonPredicate::left_operand);
       serialization::Comparison comp = predicate.GetExtension(serialization::ComparisonPredicate::comparison);
 
+      const serialization::TypedValue leftValue = left.GetExtension(serialization::ScalarLiteral::literal);
+      const serialization::Type leftType = left.GetExtension(serialization::ScalarLiteral::literal_type);
+      const serialization::TypedValue rightValue = right.GetExtension(serialization::ScalarLiteral::literal);
+      const serialization::Type rightType = right.GetExtension(serialization::ScalarLiteral::literal_type);
+
       if(comp.comparison_id()==comp.EQUAL) {
         if(left.data_source()==left.ATTRIBUTE && right.data_source()==right.LITERAL) {
-          const serialization::TypedValue rightValue = right.GetExtension(serialization::ScalarLiteral::literal);
-          const serialization::Type rightType = right.GetExtension(serialization::ScalarLiteral::literal_type);
+
           TypedValue s;
           s=s.ReconstructFromProto(rightValue);
           const Type& t = TypeFactory::ReconstructFromProto(rightType);
@@ -96,8 +100,7 @@ std::vector<std::shared_ptr<Predicate>> Predicate::breakdownHelper(serialization
           ret.push_back(eqPredicate);
         }
         else if(left.data_source()==left.LITERAL && right.data_source()==right.ATTRIBUTE){
-          const serialization::TypedValue leftValue = left.GetExtension(serialization::ScalarLiteral::literal);
-          const serialization::Type leftType = left.GetExtension(serialization::ScalarLiteral::literal_type);
+
           TypedValue s;
           s=s.ReconstructFromProto(leftValue);
           const Type& t = TypeFactory::ReconstructFromProto(leftType);
@@ -112,10 +115,18 @@ std::vector<std::shared_ptr<Predicate>> Predicate::breakdownHelper(serialization
       }
       break;
     }
+    case 3: // Negation
+    {
+      // TODO:
+    }
     case 4: //Conjunction
-      // TODO: Conjunction
-      break;
-      //TODO rest of predicate types
+    {
+      // TODO:
+    }
+    case 5: // Disjunction
+    {
+      // TODO:
+    }
     default:
       break;
   }

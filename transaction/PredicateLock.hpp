@@ -45,7 +45,15 @@ private:
   std::vector<std::shared_ptr<Predicate>> write_predicates;
 
 public:
+  enum IsolationLevel
+  {
+    DirtyWrite,
+    DirtyRead,
+    FullySerializable,
+  };
+  IsolationLevel iso_level;
   PredicateLock();
+  PredicateLock(IsolationLevel iso_level);
   bool intersect(const PredicateLock& lock) const;
   bool addPredicateWrite(std::shared_ptr<Predicate> predicate) ;
   bool addPredicateRead(std::shared_ptr<Predicate> predicate) ;
