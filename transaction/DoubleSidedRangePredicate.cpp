@@ -17,47 +17,56 @@
  * under the License.
  **/
 
-#ifndef QUICKSTEP_TRANSACTION_DOUBLE_SIDED_RANGE_PREDICATE_HPP_
-#define QUICKSTEP_TRANSACTION_DOUBLE_SIDED_RANGE_PREDICATE_HPP_
+#include "transaction/CycleDetector.hpp"
 
-#include <memory>
-#include <unordered_set>
-#include <vector>
-#include "transaction/Predicate.hpp"
-#include "transaction/AnyPredicate.hpp"
-#include "transaction/EqualityPredicate.hpp"
-#include "transaction/RangePredicate.hpp"
-#include "types/Type.hpp"
-#include "types/TypeID.hpp"
-#include "types/TypedValue.hpp"
-#include "types/operations/comparisons/Comparison.hpp"
-#include "types/operations/comparisons/EqualComparison.hpp"
-#include "types/operations/comparisons/LessComparison.hpp"
-#include "types/operations/comparisons/LessOrEqualComparison.hpp"
-#include "types/operations/comparisons/GreaterComparison.hpp"
-#include "types/operations/comparisons/GreaterOrEqualComparison.hpp"
+#include "transaction/DoubleSidedRangePredicate.hpp"
 
 namespace quickstep {
 namespace transaction {
 
-class DoubleSidedRangePredicate : public Predicate
+
+DoubleSidedRangePredicate::DoubleSidedRangePredicate(relation_id rel_id, attribute_id attr_id, RangePredicate leftBound, RangePredicate rightBound):
+Predicate(rel_id, attr_id), leftBound(leftBound), rightBound(rightBound)
 {
-private:
+  type = DoubleSidedRange;
 
-  const LessComparison* lessThanComp;
-  const LessOrEqualComparison* lessThanEqComp;
-  const GreaterComparison* greaterThanComp;
-  const GreaterOrEqualComparison* greaterThanEqComp;
+  lessThanComp = &quickstep::LessComparison::Instance();
+  lessThanEqComp = &quickstep::LessOrEqualComparison::Instance();
+  greaterThanComp = &quickstep::GreaterComparison::Instance();
+  greaterThanEqComp = &quickstep::GreaterOrEqualComparison::Instance();
 
-public:
-  const RangePredicate leftBound;
-  const RangePredicate rightBound;
-  DoubleSidedRangePredicate(relation_id rel_id, attribute_id attr_id, RangePredicate leftBound, RangePredicate rightBound);
-  ~DoubleSidedRangePredicate();
-  bool intersect(const Predicate& predicate) const override;
-};
+  // TODO: Verify the validity of the left and right bound
+}
+
+DoubleSidedRangePredicate::~DoubleSidedRangePredicate(){
+}
+
+bool DoubleSidedRangePredicate::intersect(const Predicate& predicate) const{
+  if(predicate.rel_id != rel_id || predicate.attr_id != attr_id)
+    return false;
+
+  switch(predicate.type){
+    case Any: {
+      return true;
+    }
+    case Equality: {
+      return leftBound.intersect(predicate) && rightBound.intersect(predicate);
+    }
+    case Range: {
+      return leftBound.intersect(predicate) && rightBound.intersect(predicate);
+    }
+    case DoubleSidedRange: {
+      DoubleSidedRangePredicate *drgPredicate = (DoubleSidedRangePredicate *)(&predicate);
+      return leftBound.intersect(drgPredicate->rightBound) || rightBound.intersect(drgPredicate->leftBound);
+    }
+    default: {
+      return false;
+    }
+  }
+
+  return true; // TODO: Implement this
+}
+
 
 }
 }
-
-#endif
