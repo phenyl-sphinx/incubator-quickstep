@@ -129,12 +129,8 @@ void ForemanSingleNode::run() {
 
         DCHECK(!query_handles.empty());
         bool all_queries_admitted = true;
-        if (query_handles.size() == 1u) {
-          all_queries_admitted =
-              policy_enforcer_->admitQuery(query_handles.front());
-        } else {
-          all_queries_admitted = policy_enforcer_->admitQueries(query_handles);
-        }
+        all_queries_admitted = policy_enforcer_->admitQueries(query_handles);
+
         if (!all_queries_admitted) {
           LOG(WARNING) << "The scheduler could not admit all the queries";
           // TODO(harshad) - Inform the main thread about the failure.

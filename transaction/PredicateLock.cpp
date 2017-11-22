@@ -52,12 +52,12 @@ PredicateLock::PredicateLock(IsolationLevel iso_level):iso_level(iso_level){}
 
 bool PredicateLock::intersect(const PredicateLock& lock) const{
   for(std::shared_ptr<Predicate> thisPredicate: read_predicates){
-    for(std::shared_ptr<Predicate> thatPredicate: lock.read_predicates){
-      if(thisPredicate->intersect(*thatPredicate))
-      {
-        return true;
-      }
-    }
+    // for(std::shared_ptr<Predicate> thatPredicate: lock.read_predicates){
+    //   if(thisPredicate->intersect(*thatPredicate))
+    //   {
+    //     return true;
+    //   }
+    // }
     for(std::shared_ptr<Predicate> thatPredicate: lock.write_predicates){
       if(thisPredicate->intersect(*thatPredicate))
       {

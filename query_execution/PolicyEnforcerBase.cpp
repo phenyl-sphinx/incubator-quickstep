@@ -202,7 +202,6 @@ bool PolicyEnforcerBase::admitQueries(
 
     for(int i=0;i<predicateCount;i++){
       serialization::Predicate predicate = query_cont->predicates(i);
-
       for( std::shared_ptr<transaction::Predicate> tPred : transaction::Predicate::breakdown(predicate) ){
         lockPredicates.addPredicateRead(tPred);
       }
