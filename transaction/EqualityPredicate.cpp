@@ -57,15 +57,16 @@ bool EqualityPredicate::intersect(const Predicate& predicate) const{
     return false;
 
   switch(predicate.type){
+    case Any: {
+      return true;
+    }
     case Equality: {
       const EqualityPredicate* eqPredicate = (EqualityPredicate *)&predicate;
-      if(targetType.getTypeID() != eqPredicate->targetType.getTypeID()){
-        return false; // TODO: throw proper exception here
-      }
       return eqComp->compareTypedValuesChecked(targetValue, targetType, eqPredicate->targetValue, eqPredicate->targetType);
     }
     case Range: {
-      return false;
+      const RangePredicate* rgPredicate = (RangePredicate *)&predicate;
+      return rgPredicate->intersect(*this);
     }
     default: {
       return false;

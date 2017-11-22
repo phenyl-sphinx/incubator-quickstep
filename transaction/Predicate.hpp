@@ -47,8 +47,10 @@ private:
 public:
   enum PredicateType
   {
+    Any,
     Equality,
-    Range
+    Range,
+    DoubleSidedRange
   };
   relation_id rel_id;
   attribute_id attr_id;

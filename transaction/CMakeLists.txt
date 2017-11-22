@@ -61,7 +61,9 @@ add_library(quickstep_transaction_Predicate
             RangePredicate.cpp
             RangePredicate.hpp
             AnyPredicate.cpp
-            AnyPredicate.hpp)
+            AnyPredicate.hpp
+            DoubleSidedRangePredicate.cpp
+            DoubleSidedRangePredicate.hpp)
 add_library(quickstep_transaction_PredicateLock
             PredicateLock.cpp
             PredicateLock.hpp)

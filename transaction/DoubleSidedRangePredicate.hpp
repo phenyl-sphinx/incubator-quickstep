@@ -19,40 +19,30 @@
 
 #include "transaction/CycleDetector.hpp"
 
-#include <cstdint>
-#include <memory>
-#include <stack>
-#include <unordered_map>
-#include <unordered_set>
-#include <utility>
-#include <vector>
-
-#include "transaction/Predicate.hpp"
-#include "transaction/AnyPredicate.hpp"
-#include "types/TypeID.hpp"
-#include "types/TypedValue.hpp"
-#include "types/IntType.hpp"
-#include "types/LongType.hpp"
-#include "types/FloatType.hpp"
+#include "transaction/DoubleSidedRangePredicate.hpp"
 
 namespace quickstep {
 namespace transaction {
 
-AnyPredicate::AnyPredicate(relation_id rel_id, attribute_id attr_id):
-Predicate(rel_id, attr_id)
+
+DoubleSidedRangePredicate::DoubleSidedRangePredicate(relation_id rel_id, attribute_id attr_id, RangePredicate leftBound, RangePredicate rightBound):
+Predicate(rel_id, attr_id), leftBound(leftBound), rightBound(rightBound)
 {
-  type = Any;
+  type = DoubleSidedRange;
+
+  lessThanComp = &quickstep::LessComparison::Instance();
+  lessThanEqComp = &quickstep::LessOrEqualComparison::Instance();
+  greaterThanComp = &quickstep::GreaterComparison::Instance();
+  greaterThanEqComp = &quickstep::GreaterOrEqualComparison::Instance();
 }
 
-AnyPredicate::~AnyPredicate(){
+DoubleSidedRangePredicate::~DoubleSidedRangePredicate(){
 }
 
-bool AnyPredicate::intersect(const Predicate& predicate) const{
-  if(predicate.rel_id != rel_id || predicate.attr_id != attr_id)
-    return false;
-
-  return true;
+bool DoubleSidedRangePredicate::intersect(const Predicate& predicate) const{
+  return true; // TODO: Implement this
 }
 
-}  // namespace transaction
-}  // namespace quickstep
+
+}
+}

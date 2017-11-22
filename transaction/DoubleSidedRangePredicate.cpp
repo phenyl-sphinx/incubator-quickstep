@@ -17,8 +17,8 @@
  * under the License.
  **/
 
-#ifndef QUICKSTEP_TRANSACTION_RANGE_PREDICATE_HPP_
-#define QUICKSTEP_TRANSACTION_RANGE_PREDICATE_HPP_
+#ifndef QUICKSTEP_TRANSACTION_DOUBLE_SIDED_RANGE_PREDICATE_HPP_
+#define QUICKSTEP_TRANSACTION_DOUBLE_SIDED_RANGE_PREDICATE_HPP_
 
 #include <memory>
 #include <unordered_set>
@@ -40,8 +40,7 @@
 namespace quickstep {
 namespace transaction {
 
-// Note: E.G. x > 5, LargerThan 5
-class RangePredicate : public Predicate
+class DoubleSidedRangePredicate : public Predicate
 {
 private:
 
@@ -50,19 +49,11 @@ private:
   const GreaterComparison* greaterThanComp;
   const GreaterOrEqualComparison* greaterThanEqComp;
 
-
 public:
-  enum RangeType {
-    LargerThan,
-    LargerEqTo,
-    SmallerThan,
-    SmallerEqTo
-  };
-  const RangeType rangeType;
-  const Type& targetType;
-  const TypedValue targetValue;
-  RangePredicate(relation_id rel_id, attribute_id attr_id, const Type& targetType, const TypedValue targetValue, RangeType rangeType);
-  ~RangePredicate();
+  const RangePredicate leftBound;
+  const RangePredicate rightBound;
+  DoubleSidedRangePredicate(relation_id rel_id, attribute_id attr_id, RangePredicate leftBound, RangePredicate rightBound);
+  ~DoubleSidedRangePredicate();
   bool intersect(const Predicate& predicate) const override;
 };
 

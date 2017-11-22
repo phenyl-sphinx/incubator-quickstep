@@ -66,19 +66,91 @@ bool RangePredicate::intersect(const Predicate& predicate) const{
     return false;
 
   switch(predicate.type){
-    case Equality: {
-      const EqualityPredicate& eqPredicate = dynamic_cast<const EqualityPredicate &>(predicate);
-      if(targetType.getTypeID() != eqPredicate.targetType.getTypeID()){
-        return false; // TODO: throw proper exception here
-      }
+    case Any: {
       return true;
     }
+    case Equality: {
+      const EqualityPredicate* eqPredicate = (EqualityPredicate *)(&predicate);
+
+      switch (rangeType) {
+        case LargerThan:
+          return greaterThanComp->compareTypedValuesChecked(eqPredicate->targetValue, eqPredicate->targetType, targetValue, targetType);
+        case LargerEqTo:
+          return greaterThanEqComp->compareTypedValuesChecked(eqPredicate->targetValue, eqPredicate->targetType, targetValue, targetType);
+        case SmallerThan:
+          return lessThanComp->compareTypedValuesChecked(eqPredicate->targetValue, eqPredicate->targetType, targetValue, targetType);
+        case SmallerEqTo:
+          return lessThanEqComp->compareTypedValuesChecked(eqPredicate->targetValue, eqPredicate->targetType, targetValue, targetType);
+        default:
+          return false;
+      }
+    }
     case Range: {
-      return false;
+      const RangePredicate* rgPredicate = (RangePredicate *)(&predicate);
+
+      switch (rangeType) {
+        case LargerThan:{
+          switch(rgPredicate->rangeType){
+            case LargerThan:
+              return true;
+            case LargerEqTo:
+              return true;
+            case SmallerThan:
+              return greaterThanComp->compareTypedValuesChecked(rgPredicate->targetValue, rgPredicate->targetType, targetValue, targetType);
+            case SmallerEqTo:
+              return greaterThanComp->compareTypedValuesChecked(rgPredicate->targetValue, rgPredicate->targetType, targetValue, targetType);
+            default:
+              return false;
+          }
+        }
+        case LargerEqTo:{
+          switch(rgPredicate->rangeType){
+            case LargerThan:
+              return true;
+            case LargerEqTo:
+              return true;
+            case SmallerThan:
+              return greaterThanComp->compareTypedValuesChecked(rgPredicate->targetValue, rgPredicate->targetType, targetValue, targetType);
+            case SmallerEqTo:
+              return greaterThanEqComp->compareTypedValuesChecked(rgPredicate->targetValue, rgPredicate->targetType, targetValue, targetType);
+            default:
+              return false;
+          }
+        }
+        case SmallerThan:{
+          switch(rgPredicate->rangeType){
+            case LargerThan:
+              return lessThanComp->compareTypedValuesChecked(rgPredicate->targetValue, rgPredicate->targetType, targetValue, targetType);
+            case LargerEqTo:
+              return lessThanComp->compareTypedValuesChecked(rgPredicate->targetValue, rgPredicate->targetType, targetValue, targetType);
+            case SmallerThan:
+              return true;
+            case SmallerEqTo:
+              return true;
+            default:
+              return false;
+          }
+        }
+        case SmallerEqTo:{
+          switch(rgPredicate->rangeType){
+            case LargerThan:
+              return lessThanComp->compareTypedValuesChecked(rgPredicate->targetValue, rgPredicate->targetType, targetValue, targetType);
+            case LargerEqTo:
+              return lessThanEqComp->compareTypedValuesChecked(rgPredicate->targetValue, rgPredicate->targetType, targetValue, targetType);
+            case SmallerThan:
+              return true;
+            case SmallerEqTo:
+              return true;
+            default:
+              return false;
+          }
+        }
+        default:
+          return false;
+      }
     }
-    default: {
+    default:
       return false;
-    }
   }
 }
 
