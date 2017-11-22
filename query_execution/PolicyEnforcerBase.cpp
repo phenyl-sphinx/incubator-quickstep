@@ -203,6 +203,7 @@ bool PolicyEnforcerBase::admitQueries(
     serialization::QueryContext* query_cont=curr_query->getQueryContextProtoMutable();
     int predicateCount = query_cont->predicates_size();
 
+    //General Select/Update Predicates
     for(int i=0;i<predicateCount;i++){
       serialization::Predicate predicate = query_cont->predicates(i);
       for( std::shared_ptr<transaction::Predicate> tPred : transaction::Predicate::breakdown(predicate) ){
@@ -212,6 +213,20 @@ bool PolicyEnforcerBase::admitQueries(
           lockPredicates.addPredicateRead(tPred);
       }
       //TODO: loop over selection and for every attribute touched check if we already have a predicate for that relation+attribute.  If not, add an ANY lock.
+    }
+    
+    //Aggregations handle predicates differently
+    int aggregationCount = query_cont->aggregation_states_size();
+    for(int i=0; i<aggregationCount; i++) {
+      serialization::QueryContext_AggregationOperationStateContext aosc = query_cont->aggregation_states(i);
+      serialization::AggregationOperationState aos = aosc.aggregation_state();
+      serialization::Predicate predicate = aos.predicate();
+      for( std::shared_ptr<transaction::Predicate> tPred : transaction::Predicate::breakdown(predicate) ){
+        if(isWriteInvolved)
+          lockPredicates.addPredicateWrite(tPred);
+        else
+          lockPredicates.addPredicateRead(tPred);
+      }
     }
 
     // insert the pair into the map
