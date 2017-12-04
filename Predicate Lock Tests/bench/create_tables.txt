@@ -1,0 +1,4 @@
+CREATE TABLE Child (a int, b int, c varchar(20));
+\dt
+CREATE TABLE Parent (a int, b int);
+\dt

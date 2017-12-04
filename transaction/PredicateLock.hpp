@@ -57,6 +57,7 @@ public:
   bool intersect(const PredicateLock& lock) const;
   bool addPredicateWrite(std::shared_ptr<Predicate> predicate) ;
   bool addPredicateRead(std::shared_ptr<Predicate> predicate) ;
+  bool coversAttribute(int relation, int attribute) ; 
 };
 
 }

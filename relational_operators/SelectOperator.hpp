@@ -195,6 +195,10 @@ class SelectOperator : public RelationalOperator {
   std::string getName() const override {
     return "SelectOperator";
   }
+  
+  const CatalogRelation* get_input_relation() {
+    return &input_relation_;
+  }
 
   const CatalogRelation& input_relation() const {
     return input_relation_;
@@ -223,7 +227,11 @@ class SelectOperator : public RelationalOperator {
   const relation_id getOutputRelationID() const override {
     return output_relation_.getID();
   }
-
+  
+  const std::vector<attribute_id> selection_attributes() const{
+    return simple_selection_;
+  };
+  
  private:
   /**
    * @brief Create Work Order proto.

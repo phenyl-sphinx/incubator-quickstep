@@ -31,12 +31,14 @@
 
 #include "transaction/Predicate.hpp"
 #include "transaction/PredicateLock.hpp"
+#include "transaction/AnyPredicate.hpp"
 
 #include "query_execution/QueryExecutionMessages.pb.h"
 #include "query_execution/QueryExecutionState.hpp"
 #include "query_execution/QueryExecutionTypedefs.hpp"
 #include "query_execution/QueryManagerBase.hpp"
 #include "relational_operators/WorkOrder.hpp"
+#include "relational_operators/SelectOperator.hpp"
 #include "storage/StorageBlockInfo.hpp"
 
 #include "gflags/gflags.h"
@@ -196,10 +198,12 @@ bool PolicyEnforcerBase::admitQueries(
   //TODO: Move this all to a static function of PredicateLock that takes &lock_ and query_handles
   for (QueryHandle *curr_query : query_handles) {
 
-    bool isWriteInvolved = (curr_query->getQueryResultRelation() == nullptr);
+    
 
     transaction::PredicateLock lockPredicates;
 
+ 
+    bool isWriteInvolved = (curr_query->getQueryResultRelation() == nullptr);
     serialization::QueryContext* query_cont=curr_query->getQueryContextProtoMutable();
     int predicateCount = query_cont->predicates_size();
 
@@ -212,7 +216,6 @@ bool PolicyEnforcerBase::admitQueries(
         else
           lockPredicates.addPredicateRead(tPred);
       }
-      //TODO: loop over selection and for every attribute touched check if we already have a predicate for that relation+attribute.  If not, add an ANY lock.
     }
     
     //Aggregations handle predicates differently
@@ -228,6 +231,26 @@ bool PolicyEnforcerBase::admitQueries(
           lockPredicates.addPredicateRead(tPred);
       }
     }
+    
+    //loop over selection and for every attribute touched check if we already have a predicate for that relation+attribute.  If not, add an ANY lock.
+    QueryPlan* query_plan= curr_query->getQueryPlanMutable();
+    DAG<RelationalOperator,bool>* dag = query_plan->getQueryPlanDAGMutable();
+    int nodeCount = dag->size();
+    for(int i=0; i<nodeCount; i++){
+      RelationalOperator* op = dag->getNodePayloadMutable(i);
+      if(op->getOperatorType()==op->kSelect){
+        std::vector<int> selection = ((quickstep::SelectOperator*) op)->selection_attributes();
+        const CatalogRelation* relation = ((quickstep::SelectOperator*) op)->get_input_relation();
+        int relationId = relation->getID();
+        for(int attrId : selection) {
+          if(!lockPredicates.coversAttribute(relationId, attrId)){
+            std::shared_ptr<transaction::AnyPredicate> pred =std::make_shared<transaction::AnyPredicate>(relationId,attrId);
+            lockPredicates.addPredicateRead(pred);
+          }
+        }
+      }
+    }
+    
 
     // insert the pair into the map
     locks_.insert(std::pair<QueryHandle*, transaction::PredicateLock> (curr_query,lockPredicates));

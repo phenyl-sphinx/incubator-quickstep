@@ -81,6 +81,21 @@ bool PredicateLock::intersect(const PredicateLock& lock) const{
   }
   return false;
 }
+  
+  bool PredicateLock::coversAttribute(int relation, int attribute) {
+    for(std::shared_ptr<Predicate> pred : write_predicates){
+      if(pred->rel_id==relation && pred->attr_id==attribute){
+        return true;
+      }
+    }
+    for(std::shared_ptr<Predicate> pred : read_predicates){
+      if(pred->rel_id==relation && pred->attr_id==attribute){
+        return true;
+      }
+    }
+    return false;
+    
+  }
 
 bool PredicateLock::addPredicateWrite(std::shared_ptr<Predicate> predicate) {
   write_predicates.push_back(predicate);
