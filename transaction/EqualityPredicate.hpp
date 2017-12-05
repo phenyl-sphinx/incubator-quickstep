@@ -20,18 +20,7 @@
 #ifndef QUICKSTEP_TRANSACTION_EQUALITY_PREDICATE_HPP_
 #define QUICKSTEP_TRANSACTION_EQUALITY_PREDICATE_HPP_
 
-#include <memory>
-#include <unordered_set>
-#include <vector>
 #include "transaction/Predicate.hpp"
-#include "transaction/AnyPredicate.hpp"
-#include "transaction/EqualityPredicate.hpp"
-#include "transaction/RangePredicate.hpp"
-#include "types/Type.hpp"
-#include "types/TypeID.hpp"
-#include "types/TypedValue.hpp"
-#include "types/operations/comparisons/Comparison.hpp"
-#include "types/operations/comparisons/EqualComparison.hpp"
 
 namespace quickstep {
 namespace transaction {

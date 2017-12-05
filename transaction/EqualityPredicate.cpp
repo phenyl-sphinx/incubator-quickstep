@@ -17,24 +17,9 @@
  * under the License.
  **/
 
-#include "transaction/CycleDetector.hpp"
-
-#include <cstdint>
-#include <memory>
-#include <stack>
-#include <unordered_map>
-#include <unordered_set>
-#include <utility>
-#include <vector>
-
-#include "transaction/Predicate.hpp"
 #include "transaction/EqualityPredicate.hpp"
-#include "types/TypeID.hpp"
-#include "types/TypedValue.hpp"
-#include "types/IntType.hpp"
-#include "types/LongType.hpp"
-#include "types/FloatType.hpp"
-#include "types/operations/comparisons/EqualComparison.hpp"
+#include "transaction/AnyPredicate.hpp"
+#include "transaction/RangePredicate.hpp"
 
 #include "utility/Macros.hpp"
 

@@ -17,29 +17,10 @@
  * under the License.
  **/
 
-#include "transaction/CycleDetector.hpp"
-
-#include <cstdint>
-#include <memory>
-#include <stack>
-#include <unordered_map>
-#include <unordered_set>
-#include <utility>
-#include <vector>
-
-#include "transaction/Predicate.hpp"
-#include "transaction/EqualityPredicate.hpp"
 #include "transaction/RangePredicate.hpp"
-#include "types/TypeID.hpp"
-#include "types/TypedValue.hpp"
-#include "types/IntType.hpp"
-#include "types/LongType.hpp"
-#include "types/FloatType.hpp"
-#include "types/operations/comparisons/EqualComparison.hpp"
-#include "types/operations/comparisons/LessComparison.hpp"
-#include "types/operations/comparisons/LessOrEqualComparison.hpp"
-#include "types/operations/comparisons/GreaterComparison.hpp"
-#include "types/operations/comparisons/GreaterOrEqualComparison.hpp"
+#include "transaction/AnyPredicate.hpp"
+#include "transaction/EqualityPredicate.hpp"
+#include "transaction/DoubleSidedRangePredicate.hpp"
 
 namespace quickstep {
 namespace transaction {
@@ -52,6 +33,7 @@ Predicate(rel_id, attr_id), rangeType(rangeType), targetType(targetType), target
 {
   type = Range;
 
+  eqComp = &quickstep::EqualComparison::Instance();
   lessThanComp = &quickstep::LessComparison::Instance();
   lessThanEqComp = &quickstep::LessOrEqualComparison::Instance();
   greaterThanComp = &quickstep::GreaterComparison::Instance();

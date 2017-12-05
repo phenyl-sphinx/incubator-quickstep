@@ -24,8 +24,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "transaction/Predicate.hpp"
-
 #include "catalog/CatalogDatabase.hpp"
 #include "catalog/CatalogRelation.hpp"
 #include "catalog/PartitionScheme.hpp"
@@ -33,6 +31,11 @@
 #include "query_execution/QueryExecutionState.hpp"
 #include "query_execution/QueryExecutionTypedefs.hpp"
 #include "query_execution/QueryManagerBase.hpp"
+#include "types/operations/comparisons/EqualComparison.hpp"
+#include "types/operations/comparisons/LessComparison.hpp"
+#include "types/operations/comparisons/LessOrEqualComparison.hpp"
+#include "types/operations/comparisons/GreaterComparison.hpp"
+#include "types/operations/comparisons/GreaterOrEqualComparison.hpp"
 
 namespace quickstep {
 namespace transaction {
@@ -43,14 +46,15 @@ private:
 
 
   static std::vector<std::shared_ptr<Predicate>> breakdownHelper(serialization::Predicate& predicate);
+  static std::vector<std::shared_ptr<Predicate>> combineConjuncts(std::vector<std::shared_ptr<Predicate>> left, std::vector<std::shared_ptr<Predicate>> right);
 
 public:
   enum PredicateType
   {
-    Any,
-    Equality,
+    Any = 0,
     Range,
-    DoubleSidedRange
+    DoubleSidedRange,
+    Equality
   };
   relation_id rel_id;
   attribute_id attr_id;
@@ -58,7 +62,9 @@ public:
 
 
   static std::vector<std::shared_ptr<Predicate>> breakdown(serialization::Predicate& predicate);
+  static std::shared_ptr<Predicate> MergeRange(std::shared_ptr<Predicate> a, std::shared_ptr<Predicate> b);
   Predicate(relation_id rel_id, attribute_id attr_id);
+  bool comparable(const Predicate* predicate) const;
   virtual ~Predicate(){};
   virtual bool intersect(const Predicate& predicate) const = 0;
 };

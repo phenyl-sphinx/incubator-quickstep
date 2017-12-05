@@ -17,8 +17,6 @@
  * under the License.
  **/
 
-#include "transaction/CycleDetector.hpp"
-
 #include "transaction/DoubleSidedRangePredicate.hpp"
 
 namespace quickstep {

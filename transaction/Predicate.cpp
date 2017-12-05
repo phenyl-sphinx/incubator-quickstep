@@ -16,56 +16,74 @@
  * specific language governing permissions and limitations
  * under the License.
  **/
-#include "transaction/CycleDetector.hpp"
 
-#include <cstdint>
-#include <memory>
-#include <stack>
-#include <unordered_map>
-#include <unordered_set>
-#include <utility>
-#include <vector>
-
-#include "catalog/Catalog.pb.h"
-#include "catalog/CatalogConfig.h"
-#include "catalog/CatalogRelationSchema.hpp"
-#include "catalog/CatalogRelationStatistics.hpp"
-#include "catalog/CatalogTypedefs.hpp"
-#include "catalog/IndexScheme.hpp"
-
-#ifdef QUICKSTEP_HAVE_LIBNUMA
-#include "catalog/NUMAPlacementScheme.hpp"
-#endif  // QUICKSTEP_HAVE_LIBNUMA
-
-#include "catalog/PartitionScheme.hpp"
-#include "storage/StorageBlockInfo.hpp"
-#include "storage/StorageBlockLayout.hpp"
-#include "storage/StorageConstants.hpp"
-#include "threading/Mutex.hpp"
-#include "threading/SharedMutex.hpp"
-#include "threading/SpinSharedMutex.hpp"
-#include "utility/Macros.hpp"
 
 #include "transaction/Predicate.hpp"
 #include "transaction/AnyPredicate.hpp"
 #include "transaction/EqualityPredicate.hpp"
 #include "transaction/RangePredicate.hpp"
+#include "transaction/DoubleSidedRangePredicate.hpp"
 #include "types/TypeID.hpp"
 #include "types/TypedValue.hpp"
 #include "types/IntType.hpp"
 #include "types/LongType.hpp"
 #include "types/FloatType.hpp"
-#include "types/operations/comparisons/EqualComparison.hpp"
-#include "types/operations/comparisons/LessComparison.hpp"
-#include "types/operations/comparisons/LessOrEqualComparison.hpp"
-#include "types/operations/comparisons/GreaterComparison.hpp"
-#include "types/operations/comparisons/GreaterOrEqualComparison.hpp"
+
+#include "utility/Macros.hpp"
 
 namespace quickstep {
 namespace transaction {
 
 Predicate::Predicate(relation_id rel_id, attribute_id attr_id):
 rel_id(rel_id), attr_id(attr_id) {
+}
+
+bool Predicate::comparable(const Predicate* predicate) const{
+  if((rel_id == predicate->rel_id) && (attr_id == predicate->attr_id))
+    return true;
+  else
+    return false;
+}
+
+std::vector<std::shared_ptr<Predicate>> Predicate::combineConjuncts(std::vector<std::shared_ptr<Predicate>> a, std::vector<std::shared_ptr<Predicate>> b) {
+  std::vector<std::shared_ptr<Predicate>> ret;
+  for(auto a_itr=a.begin(); a_itr!=a.end(); a_itr++){
+    auto a_element = *a_itr;
+
+    for(auto b_itr=b.begin(); b_itr!=b.end(); b_itr++){
+      auto b_element = *b_itr;
+      if(a_element->intersect(*b_element)){
+        if(a_element->type == Any){
+          // a is ANY
+          b.erase(b_itr);
+          b_itr--;
+        }
+        else if((a_element->type == Range) || (a_element->type == DoubleSidedRange)){
+          if(b_element->type == Equality) {
+            b.erase(b_itr);
+            b_itr--;
+          }
+          else if((a_element->type == Range) && (b_element->type == Range)){
+            // Both are Range
+            a.erase(a_itr);
+            a.insert(a_itr-1, MergeRange(a_element, b_element));
+            b.erase(b_itr);
+            b_itr--;
+          }
+          else{
+            // TODO: Merge other cases, not necessary
+          }
+        }
+        else{
+          // both are equality
+        }
+      }
+    }
+  }
+  ret.reserve( a.size() + b.size() ); // preallocate memory
+  ret.insert( ret.end(), a.begin(), a.end() );
+  ret.insert( ret.end(), b.begin(), b.end() );
+  return ret;
 }
 
 std::vector<std::shared_ptr<Predicate>> Predicate::breakdownHelper(serialization::Predicate& predicate){
@@ -109,8 +127,18 @@ std::vector<std::shared_ptr<Predicate>> Predicate::breakdownHelper(serialization
             right.GetExtension(serialization::ScalarAttribute::attribute_id), t, s);
           ret.push_back(eqPredicate);
         }
-        else{
-          // TODO: Any Predicate on both attribute
+        else if(left.data_source()==left.ATTRIBUTE && right.data_source()==right.ATTRIBUTE){
+
+          std::shared_ptr<Predicate> rPredicate = std::make_shared<AnyPredicate>(right.GetExtension(serialization::ScalarAttribute::relation_id),
+            right.GetExtension(serialization::ScalarAttribute::attribute_id));
+          ret.push_back(rPredicate);
+
+          std::shared_ptr<Predicate> lPredicate = std::make_shared<AnyPredicate>(left.GetExtension(serialization::ScalarAttribute::relation_id),
+            left.GetExtension(serialization::ScalarAttribute::attribute_id));
+          ret.push_back(lPredicate);
+        }
+        else {
+          // TODO: Other cases e.g. A > B
         }
       }
       break;
@@ -121,11 +149,25 @@ std::vector<std::shared_ptr<Predicate>> Predicate::breakdownHelper(serialization
     }
     case 4: //Conjunction
     {
-      // TODO:
+      serialization::Predicate left = predicate.GetExtension(serialization::PredicateWithList::operands,0);
+      serialization::Predicate right = predicate.GetExtension(serialization::PredicateWithList::operands,1);
+
+      std::vector<std::shared_ptr<Predicate>> left_list = breakdownHelper(left);
+      std::vector<std::shared_ptr<Predicate>> right_list = breakdownHelper(right);
+
+      ret = combineConjuncts(left_list, right_list);
     }
     case 5: // Disjunction
     {
-      // TODO:
+      serialization::Predicate left = predicate.GetExtension(serialization::PredicateWithList::operands,0);
+      serialization::Predicate right = predicate.GetExtension(serialization::PredicateWithList::operands,1);
+
+      std::vector<std::shared_ptr<Predicate>> left_list = breakdownHelper(left);
+      std::vector<std::shared_ptr<Predicate>> right_list = breakdownHelper(right);
+
+      ret.reserve( left_list.size() + right_list.size() ); // preallocate memory
+      ret.insert( ret.end(), left_list.begin(), left_list.end() );
+      ret.insert( ret.end(), right_list.begin(), right_list.end() );
     }
     default:
       break;
@@ -136,6 +178,83 @@ std::vector<std::shared_ptr<Predicate>> Predicate::breakdownHelper(serialization
 
 std::vector<std::shared_ptr<Predicate>> Predicate::breakdown(serialization::Predicate& predicate){
   return breakdownHelper(predicate);
+}
+
+std::shared_ptr<Predicate> Predicate::MergeRange(std::shared_ptr<Predicate> raw_a, std::shared_ptr<Predicate> raw_b){
+  // if((raw_a->type != Range) || (raw_b->type != Range))
+  //   return std::make_shared<Predicate>(nullptr);
+
+  auto a = std::dynamic_pointer_cast<RangePredicate>(raw_a);
+  auto b = std::dynamic_pointer_cast<RangePredicate>(raw_b);
+
+
+  auto eqComp = &quickstep::EqualComparison::Instance();
+  auto lessThanComp = &quickstep::LessComparison::Instance();
+  auto greaterThanComp = &quickstep::GreaterComparison::Instance();
+
+  if (
+    ((a->rangeType == RangePredicate::LargerThan) || (a->rangeType == RangePredicate::LargerEqTo)) &&
+    ((b->rangeType == RangePredicate::LargerThan) || (b->rangeType == RangePredicate::LargerEqTo))
+  ) {
+    if(eqComp->compareTypedValuesChecked(b->targetValue, b->targetType, a->targetValue, a->targetType)){
+      // the two predicate value are the same
+      if(b->rangeType == RangePredicate::LargerEqTo){
+        return std::make_shared<RangePredicate>(a->rel_id, a->attr_id, a->targetType, a->targetValue, a->rangeType);
+      }
+      else if(b->rangeType == RangePredicate::LargerEqTo){
+        return std::make_shared<RangePredicate>(b->rel_id, b->attr_id, b->targetType, b->targetValue, b->rangeType);
+      }
+      else{
+        return std::make_shared<RangePredicate>(a->rel_id, a->attr_id, a->targetType, a->targetValue, a->rangeType);
+      }
+    }
+    else {
+      // use the smaller one
+      if(lessThanComp->compareTypedValuesChecked(a->targetValue, a->targetType, b->targetValue, b->targetType)){
+        return std::make_shared<RangePredicate>(a->rel_id, a->attr_id, a->targetType, a->targetValue, a->rangeType);
+      }
+      else{
+        return std::make_shared<RangePredicate>(b->rel_id, b->attr_id, b->targetType, b->targetValue, b->rangeType);
+      }
+    }
+  }
+  else if (
+    ((a->rangeType == RangePredicate::SmallerThan) || (a->rangeType == RangePredicate::SmallerEqTo)) &&
+    ((b->rangeType == RangePredicate::SmallerThan) || (b->rangeType == RangePredicate::SmallerThan))
+  ){
+    if(eqComp->compareTypedValuesChecked(b->targetValue, b->targetType, a->targetValue, a->targetType)){
+      // the two predicate value are the same
+      if(b->rangeType == RangePredicate::SmallerEqTo){
+        return std::make_shared<RangePredicate>(a->rel_id, a->attr_id, a->targetType, a->targetValue, a->rangeType);
+      }
+      else if(b->rangeType == RangePredicate::SmallerEqTo){
+        return std::make_shared<RangePredicate>(b->rel_id, b->attr_id, b->targetType, b->targetValue, b->rangeType);
+      }
+      else{
+        return std::make_shared<RangePredicate>(a->rel_id, a->attr_id, a->targetType, a->targetValue, a->rangeType);
+      }
+    }
+    else {
+      // use the larger one
+      if(greaterThanComp->compareTypedValuesChecked(a->targetValue, a->targetType, b->targetValue, b->targetType)){
+        return std::make_shared<RangePredicate>(a->rel_id, a->attr_id, a->targetType, a->targetValue, a->rangeType);
+      }
+      else{
+        return std::make_shared<RangePredicate>(b->rel_id, b->attr_id, b->targetType, b->targetValue, b->rangeType);
+      }
+    }
+  }
+  else{
+    // The two comparison are facing different direction, can be merged into a double-sided-range
+    if((a->rangeType == RangePredicate::SmallerThan) || (a->rangeType == RangePredicate::SmallerEqTo)) {
+      // the current one is the right bound
+      return std::make_shared<DoubleSidedRangePredicate>(a->rel_id, a->attr_id, *b, *a);
+    }
+    else {
+      // the current one is the left bound
+      return std::make_shared<DoubleSidedRangePredicate>(a->rel_id, a->attr_id, *a, *b);
+    }
+  }
 }
 
 }

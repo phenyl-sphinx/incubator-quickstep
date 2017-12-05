@@ -17,23 +17,8 @@
  * under the License.
  **/
 
-#include "transaction/CycleDetector.hpp"
-
-#include <cstdint>
-#include <memory>
-#include <stack>
-#include <unordered_map>
-#include <unordered_set>
-#include <utility>
-#include <vector>
-
-#include "transaction/Predicate.hpp"
 #include "transaction/AnyPredicate.hpp"
-#include "types/TypeID.hpp"
-#include "types/TypedValue.hpp"
-#include "types/IntType.hpp"
-#include "types/LongType.hpp"
-#include "types/FloatType.hpp"
+
 
 namespace quickstep {
 namespace transaction {

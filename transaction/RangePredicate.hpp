@@ -20,22 +20,7 @@
 #ifndef QUICKSTEP_TRANSACTION_RANGE_PREDICATE_HPP_
 #define QUICKSTEP_TRANSACTION_RANGE_PREDICATE_HPP_
 
-#include <memory>
-#include <unordered_set>
-#include <vector>
 #include "transaction/Predicate.hpp"
-#include "transaction/AnyPredicate.hpp"
-#include "transaction/EqualityPredicate.hpp"
-#include "transaction/RangePredicate.hpp"
-#include "types/Type.hpp"
-#include "types/TypeID.hpp"
-#include "types/TypedValue.hpp"
-#include "types/operations/comparisons/Comparison.hpp"
-#include "types/operations/comparisons/EqualComparison.hpp"
-#include "types/operations/comparisons/LessComparison.hpp"
-#include "types/operations/comparisons/LessOrEqualComparison.hpp"
-#include "types/operations/comparisons/GreaterComparison.hpp"
-#include "types/operations/comparisons/GreaterOrEqualComparison.hpp"
 
 namespace quickstep {
 namespace transaction {
@@ -45,11 +30,11 @@ class RangePredicate : public Predicate
 {
 private:
 
+  const EqualComparison* eqComp;
   const LessComparison* lessThanComp;
   const LessOrEqualComparison* lessThanEqComp;
   const GreaterComparison* greaterThanComp;
   const GreaterOrEqualComparison* greaterThanEqComp;
-
 
 public:
   enum RangeType {
