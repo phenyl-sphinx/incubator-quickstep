@@ -1,0 +1,4 @@
+COPY Child FROM 'child.csv' WITH (DELIMITER '|');
+\dt
+COPY Parent FROM 'parent.csv' WITH (DELIMITER '|');
+\dt
