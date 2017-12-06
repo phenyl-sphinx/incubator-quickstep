@@ -1,6 +1,6 @@
 from random import randint
 
-numberOfPredicates= [1,10,100,1000,10000]
+numberOfPredicates= [1,3,7,15,31,63,127,255,511,1023,2047,4095,8191]
 numberOfQueries = 10
 setCounter=1;
 whereCounter=1000000;
