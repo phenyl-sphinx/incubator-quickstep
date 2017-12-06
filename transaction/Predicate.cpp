@@ -198,15 +198,16 @@ std::vector<std::shared_ptr<Predicate>> Predicate::breakdownHelper(serialization
     }
     case 5: // Disjunction
     {
-      serialization::Predicate left = predicate.GetExtension(serialization::PredicateWithList::operands,0);
-      serialization::Predicate right = predicate.GetExtension(serialization::PredicateWithList::operands,1);
 
-      std::vector<std::shared_ptr<Predicate>> left_list = breakdownHelper(left);
-      std::vector<std::shared_ptr<Predicate>> right_list = breakdownHelper(right);
+      for(size_t i = 0; i < predicate.ExtensionSize(serialization::PredicateWithList::operands); i++){
 
-      ret.reserve( left_list.size() + right_list.size() ); // preallocate memory
-      ret.insert( ret.end(), left_list.begin(), left_list.end() );
-      ret.insert( ret.end(), right_list.begin(), right_list.end() );
+        serialization::Predicate subPred = predicate.GetExtension(serialization::PredicateWithList::operands,0);
+
+        std::vector<std::shared_ptr<Predicate>> sub_list = breakdownHelper(subPred);
+
+        ret.insert( ret.end(), sub_list.begin(), sub_list.end() );
+      }
+
     }
     default:
       break;
