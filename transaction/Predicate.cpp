@@ -188,24 +188,26 @@ std::vector<std::shared_ptr<Predicate>> Predicate::breakdownHelper(serialization
     }
     case 4: //Conjunction
     {
-      serialization::Predicate left = predicate.GetExtension(serialization::PredicateWithList::operands,0);
-      serialization::Predicate right = predicate.GetExtension(serialization::PredicateWithList::operands,1);
 
-      std::vector<std::shared_ptr<Predicate>> left_list = breakdownHelper(left);
-      std::vector<std::shared_ptr<Predicate>> right_list = breakdownHelper(right);
+      for(size_t i = 0; i < predicate.ExtensionSize(serialization::PredicateWithList::operands); i++){
 
-      ret = combineConjuncts(left_list, right_list);
+        serialization::Predicate subPred = predicate.GetExtension(serialization::PredicateWithList::operands,i);
+        std::vector<std::shared_ptr<Predicate>> sub_list = breakdownHelper(subPred);
+
+        auto combined = combineConjuncts(ret, sub_list);
+        ret.insert( ret.end(), combined.begin(), combined.end() );
+
+      }
     }
     case 5: // Disjunction
     {
 
       for(size_t i = 0; i < predicate.ExtensionSize(serialization::PredicateWithList::operands); i++){
 
-        serialization::Predicate subPred = predicate.GetExtension(serialization::PredicateWithList::operands,0);
-
+        serialization::Predicate subPred = predicate.GetExtension(serialization::PredicateWithList::operands,i);
         std::vector<std::shared_ptr<Predicate>> sub_list = breakdownHelper(subPred);
-
         ret.insert( ret.end(), sub_list.begin(), sub_list.end() );
+
       }
 
     }
