@@ -200,11 +200,11 @@ bool PolicyEnforcerBase::admitQueries(
   //TODO: Move this all to a static function of PredicateLock that takes &lock_ and query_handles
   for (QueryHandle *curr_query : query_handles) {
 
-    
+
 
     transaction::PredicateLock lockPredicates;
 
- 
+
     bool isWriteInvolved = (curr_query->getQueryResultRelation() == nullptr);
     serialization::QueryContext* query_cont=curr_query->getQueryContextProtoMutable();
     int predicateCount = query_cont->predicates_size();
@@ -219,7 +219,7 @@ bool PolicyEnforcerBase::admitQueries(
           lockPredicates.addPredicateRead(tPred);
       }
     }
-    
+
     //Aggregations handle predicates differently
     int aggregationCount = query_cont->aggregation_states_size();
     for(int i=0; i<aggregationCount; i++) {
@@ -233,7 +233,7 @@ bool PolicyEnforcerBase::admitQueries(
           lockPredicates.addPredicateRead(tPred);
       }
     }
-    
+
     //loop over selection and for every attribute touched check if we already have a predicate for that relation+attribute.  If not, add an ANY lock.
     QueryPlan* query_plan= curr_query->getQueryPlanMutable();
     DAG<RelationalOperator,bool>* dag = query_plan->getQueryPlanDAGMutable();
@@ -275,7 +275,7 @@ bool PolicyEnforcerBase::admitQueries(
         }
       }
     }
-    
+
 
     // insert the pair into the map
     locks_.insert(std::pair<QueryHandle*, transaction::PredicateLock> (curr_query,lockPredicates));
@@ -288,6 +288,8 @@ bool PolicyEnforcerBase::admitQueries(
         break;
       }
     }
+    LOG_WARNING("Number of predicates: ");
+    LOG_WARNING(lockPredicates.numPredicates());
     if(!doesIntersect){
       bool query_admitted=admitQuery(curr_query);
       if(!query_admitted){

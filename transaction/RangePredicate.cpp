@@ -131,6 +131,10 @@ bool RangePredicate::intersect(const Predicate& predicate) const{
           return false;
       }
     }
+    case DoubleSidedRange: {
+      const DoubleSidedRangePredicate* rgPredicate = (DoubleSidedRangePredicate *)(&predicate);
+      return rgPredicate->intersect(*this);
+    }
     default:
       return false;
   }
