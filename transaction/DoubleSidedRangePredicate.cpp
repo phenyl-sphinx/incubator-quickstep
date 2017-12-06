@@ -18,6 +18,7 @@
  **/
 
 #include "transaction/DoubleSidedRangePredicate.hpp"
+#include "utility/Macros.hpp"
 
 namespace quickstep {
 namespace transaction {
@@ -48,14 +49,14 @@ bool DoubleSidedRangePredicate::intersect(const Predicate& predicate) const{
       return true;
     }
     case Equality: {
-      return leftBound.intersect(predicate) && rightBound.intersect(predicate);
+      return (leftBound.intersect(predicate) && rightBound.intersect(predicate));
     }
     case Range: {
-      return leftBound.intersect(predicate) && rightBound.intersect(predicate);
+      return (leftBound.intersect(predicate) && rightBound.intersect(predicate));
     }
     case DoubleSidedRange: {
       DoubleSidedRangePredicate *drgPredicate = (DoubleSidedRangePredicate *)(&predicate);
-      return leftBound.intersect(drgPredicate->rightBound) || rightBound.intersect(drgPredicate->leftBound);
+      return (leftBound.intersect(drgPredicate->rightBound) || rightBound.intersect(drgPredicate->leftBound));
     }
     default: {
       return false;

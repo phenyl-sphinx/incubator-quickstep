@@ -50,6 +50,10 @@ PredicateLock::PredicateLock(){
 }
 PredicateLock::PredicateLock(IsolationLevel iso_level):iso_level(iso_level){}
 
+size_t PredicateLock::numPredicates() const{
+  return read_predicates.size()+write_predicates.size();
+}
+
 bool PredicateLock::intersect(const PredicateLock& lock) const{
   for(std::shared_ptr<Predicate> thisPredicate: read_predicates){
     // for(std::shared_ptr<Predicate> thatPredicate: lock.read_predicates){
@@ -81,7 +85,7 @@ bool PredicateLock::intersect(const PredicateLock& lock) const{
   }
   return false;
 }
-  
+
   bool PredicateLock::coversAttribute(int relation, int attribute) {
     for(std::shared_ptr<Predicate> pred : write_predicates){
       if(pred->rel_id==relation && pred->attr_id==attribute){
@@ -94,7 +98,7 @@ bool PredicateLock::intersect(const PredicateLock& lock) const{
       }
     }
     return false;
-    
+
   }
 
 bool PredicateLock::addPredicateWrite(std::shared_ptr<Predicate> predicate) {

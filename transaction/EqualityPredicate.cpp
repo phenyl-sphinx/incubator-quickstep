@@ -20,6 +20,7 @@
 #include "transaction/EqualityPredicate.hpp"
 #include "transaction/AnyPredicate.hpp"
 #include "transaction/RangePredicate.hpp"
+#include "transaction/DoubleSidedRangePredicate.hpp"
 
 #include "utility/Macros.hpp"
 
@@ -51,6 +52,10 @@ bool EqualityPredicate::intersect(const Predicate& predicate) const{
     }
     case Range: {
       const RangePredicate* rgPredicate = (RangePredicate *)&predicate;
+      return rgPredicate->intersect(*this);
+    }
+    case DoubleSidedRange: {
+      const DoubleSidedRangePredicate* rgPredicate = (DoubleSidedRangePredicate *)&predicate;
       return rgPredicate->intersect(*this);
     }
     default: {

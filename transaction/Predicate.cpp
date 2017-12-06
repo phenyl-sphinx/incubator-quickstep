@@ -65,8 +65,7 @@ std::vector<std::shared_ptr<Predicate>> Predicate::combineConjuncts(std::vector<
           }
           else if((a_element->type == Range) && (b_element->type == Range)){
             // Both are Range
-            a.erase(a_itr);
-            a.insert(a_itr-1, MergeRange(a_element, b_element));
+            *a_itr = MergeRange(a_element, b_element);
             b.erase(b_itr);
             b_itr--;
           }
@@ -217,6 +216,8 @@ std::vector<std::shared_ptr<Predicate>> Predicate::breakdownHelper(serialization
 }
 
 std::vector<std::shared_ptr<Predicate>> Predicate::breakdown(serialization::Predicate& predicate){
+  // LOG_WARNING("Breakdown size");
+  // LOG_WARNING(breakdownHelper(predicate).size());
   return breakdownHelper(predicate);
 }
 

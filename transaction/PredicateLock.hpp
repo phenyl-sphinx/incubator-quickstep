@@ -54,10 +54,11 @@ public:
   IsolationLevel iso_level;
   PredicateLock();
   PredicateLock(IsolationLevel iso_level);
+  size_t numPredicates() const;
   bool intersect(const PredicateLock& lock) const;
   bool addPredicateWrite(std::shared_ptr<Predicate> predicate) ;
   bool addPredicateRead(std::shared_ptr<Predicate> predicate) ;
-  bool coversAttribute(int relation, int attribute) ; 
+  bool coversAttribute(int relation, int attribute) ;
 };
 
 }
