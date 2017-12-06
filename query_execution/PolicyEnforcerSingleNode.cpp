@@ -39,7 +39,7 @@
 
 namespace quickstep {
 
-DEFINE_uint64(max_msgs_per_dispatch_round, 20, "Maximum number of messages that"
+DEFINE_uint64(max_msgs_per_dispatch_round, 200, "Maximum number of messages that"
               " can be allocated in a single round of dispatch of messages to"
               " the workers.");
 
