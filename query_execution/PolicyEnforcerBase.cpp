@@ -32,6 +32,7 @@
 #include "transaction/Predicate.hpp"
 #include "transaction/PredicateLock.hpp"
 #include "transaction/AnyPredicate.hpp"
+#include "transaction/EqualityPredicate.hpp"
 
 #include "query_execution/QueryExecutionMessages.pb.h"
 #include "query_execution/QueryExecutionState.hpp"
@@ -39,6 +40,7 @@
 #include "query_execution/QueryManagerBase.hpp"
 #include "relational_operators/WorkOrder.hpp"
 #include "relational_operators/SelectOperator.hpp"
+#include "relational_operators/UpdateOperator.hpp"
 #include "storage/StorageBlockInfo.hpp"
 
 #include "gflags/gflags.h"
@@ -247,6 +249,29 @@ bool PolicyEnforcerBase::admitQueries(
             std::shared_ptr<transaction::AnyPredicate> pred =std::make_shared<transaction::AnyPredicate>(relationId,attrId);
             lockPredicates.addPredicateRead(pred);
           }
+        }
+      }
+      if(op->getOperatorType()==op->kUpdate){
+        int updateGroupIndex = ((quickstep::UpdateOperator*) op)->getUpdateGroup();
+        serialization::QueryContext_UpdateGroup updateGroup = query_cont->update_groups(updateGroupIndex);
+        int relationId = updateGroup.relation_id();
+        int attributeCount = updateGroup.update_assignments_size();
+        for(int i =0;i<attributeCount;i++){
+          
+          serialization::QueryContext_UpdateGroup_UpdateAssignment assignment = updateGroup.update_assignments(i);
+          int attributeId = assignment.attribute_id();
+          auto scalar = assignment.scalar();
+          serialization::TypedValue val = scalar.GetExtension(serialization::ScalarLiteral::literal);
+          TypedValue value(val.int_value());
+          const Type* type = &(TypeFactory::ReconstructFromProto(assignment.scalar().GetExtension(serialization::ScalarLiteral::literal_type)));
+          std::shared_ptr<transaction::EqualityPredicate> pred = std::make_shared<transaction::EqualityPredicate>(relationId, attributeId, *type, value);
+          
+          if(!lockPredicates.coversAttribute(relationId, attributeId)){
+            std::shared_ptr<transaction::AnyPredicate> predGen =std::make_shared<transaction::AnyPredicate>(relationId,attributeId);
+            lockPredicates.addPredicateWrite(predGen);
+          }
+          
+          lockPredicates.addPredicateWrite(pred);
         }
       }
     }

@@ -117,6 +117,10 @@ class UpdateOperator : public RelationalOperator {
   std::string getName() const override {
     return "UpdateOperator";
   }
+  
+  int getUpdateGroup() const {
+    return update_group_index_;
+  }
 
   bool getAllWorkOrders(WorkOrdersContainer *container,
                         QueryContext *query_context,
