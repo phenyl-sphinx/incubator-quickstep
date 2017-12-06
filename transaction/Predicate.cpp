@@ -138,7 +138,47 @@ std::vector<std::shared_ptr<Predicate>> Predicate::breakdownHelper(serialization
           ret.push_back(lPredicate);
         }
         else {
-          // TODO: Other cases e.g. A > B
+          // TODO: Other cases
+        }
+      }
+      else if((comp.comparison_id()==comp.LESS) ||
+        (comp.comparison_id()==comp.LESS_OR_EQUAL) ||
+        (comp.comparison_id()==comp.GREATER) ||
+        (comp.comparison_id()==comp.GREATER_OR_EQUAL))
+      {
+        RangePredicate::RangeType rangeType = (comp.comparison_id()==comp.LESS) ? RangePredicate::SmallerThan :
+          (comp.comparison_id()==comp.LESS_OR_EQUAL) ? RangePredicate::SmallerEqTo :
+          (comp.comparison_id()==comp.GREATER) ? RangePredicate::LargerThan :
+          RangePredicate::LargerEqTo;
+        if(left.data_source()==left.ATTRIBUTE && right.data_source()==right.LITERAL) {
+
+          TypedValue s;
+          s=s.ReconstructFromProto(rightValue);
+          const Type& t = TypeFactory::ReconstructFromProto(rightType);
+
+          std::shared_ptr<Predicate> rgPredicate = std::make_shared<RangePredicate>(left.GetExtension(serialization::ScalarAttribute::relation_id),
+            left.GetExtension(serialization::ScalarAttribute::attribute_id), t, s, rangeType);
+          ret.push_back(rgPredicate);
+        }
+        else if(left.data_source()==left.LITERAL && right.data_source()==right.ATTRIBUTE){
+
+          TypedValue s;
+          s=s.ReconstructFromProto(leftValue);
+          const Type& t = TypeFactory::ReconstructFromProto(leftType);
+
+          std::shared_ptr<Predicate> eqPredicate = std::make_shared<RangePredicate>(right.GetExtension(serialization::ScalarAttribute::relation_id),
+            right.GetExtension(serialization::ScalarAttribute::attribute_id), t, s, rangeType);
+          ret.push_back(eqPredicate);
+        }
+        else if(left.data_source()==left.ATTRIBUTE && right.data_source()==right.ATTRIBUTE){
+
+          std::shared_ptr<Predicate> rPredicate = std::make_shared<AnyPredicate>(right.GetExtension(serialization::ScalarAttribute::relation_id),
+            right.GetExtension(serialization::ScalarAttribute::attribute_id));
+          ret.push_back(rPredicate);
+
+          std::shared_ptr<Predicate> lPredicate = std::make_shared<AnyPredicate>(left.GetExtension(serialization::ScalarAttribute::relation_id),
+            left.GetExtension(serialization::ScalarAttribute::attribute_id));
+          ret.push_back(lPredicate);
         }
       }
       break;
