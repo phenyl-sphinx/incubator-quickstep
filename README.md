@@ -5,6 +5,9 @@
 [Travis]: https://travis-ci.org/apache/incubator-quickstep
 [Travis Widget]: https://travis-ci.org/apache/incubator-quickstep.svg?branch=master
 
+## Predicate Locking In Quickstep
+This branch includes the predicate locking project done in the Fall of 2017.  This is primarily implemented in the Foreman process shortly before admitting queries to workers.  For performance testing we created a script that generates example data, loads it, generates example queries, and runs them.  This makes testing a range of tuple volumes and predicate complexity very simple.  To run this script, go to the Predicate Lock Tests/bench folder and run runTests.sh.  Note the script has some hard coded parameters, so you may need to edit the script and modify those (they are well annotated).
+
 ## What is Quickstep?
 Apache Quickstep is high-performance database engine designed to exploit the full potential of hardware that is packed in modern computing boxes (servers and laptops). The initial version (available now!) targets single-node in-memory environments. If your data spills overs the memory limit Quickstep will still work, so you don't have to obsessively worry about the in-memory part. Also, if your working set fits in memory then Quickstep will transparently and automatically figure that out, and cache that hot set to  deliver in-memory performance.
 
