@@ -405,6 +405,19 @@ class StorageManager {
    * @param response Where to store the pulled block content.
    **/
   void pullBlockOrBlob(const block_id block, PullResponse *response) const;
+
+  /**
+   * @brief Report the existance of a lip filter to the conductor
+   *
+   * @param QueryContext.
+   **/
+  void ReportLIPFilterExistence(const std::vector<std::size_t> &lip_filter_ids);
+
+
+  /**
+   * The client id for shiftboss that lives on the same node
+   **/
+  tmb::client_id shiftboss_tmb_client_id_;
 #endif
 
   /**

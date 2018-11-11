@@ -29,6 +29,9 @@ enum LIPFilterType {
 
 message LIPFilter {
   required LIPFilterType lip_filter_type = 1;
+  optional uint64 lip_filter_id = 2;
+  optional uint64 num_bits = 3;
+  optional bytes actual_filter = 4;
 
   extensions 16 to max;
 }

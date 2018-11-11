@@ -202,6 +202,26 @@ class PolicyEnforcerDistributed final : public PolicyEnforcerBase {
       const std::size_t next_shiftboss_index_to_schedule,
       std::size_t *shiftboss_index);
 
+  void getShiftbossIndexForBuildingLip(
+      const std::size_t query_id,
+      const std::vector<QueryContext::lip_filter_id> &lip_filter_indexes,
+      const partition_id part_id,
+      const BlockLocator &block_locator,
+      const block_id block,
+      const std::size_t next_shiftboss_index_to_schedule,
+      std::size_t *shiftboss_index);
+  void getShiftbossIndexForProbingLip(
+      const std::size_t query_id,
+      const std::vector<QueryContext::lip_filter_id> &lip_filter_indexes,
+      const partition_id part_id,
+      const BlockLocator &block_locator,
+      const block_id block,
+      const std::size_t next_shiftboss_index_to_schedule,
+      std::size_t *shiftboss_index);
+  std::vector<std::size_t> getShiftbossIndexesForLipResidence(
+      const std::size_t query_id,
+      const QueryContext::lip_filter_id lip_filter_index);
+
   /**
    * @brief Get or set the index of Shiftboss for a NestedLoopsJoin related WorkOrder.
    * If it is the first join on <nested_loops_join_index, part_id>,

@@ -26,6 +26,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <queue>
 
 #include "catalog/CatalogTypedefs.hpp"
 #include "query_execution/ForemanBase.hpp"
@@ -98,7 +99,7 @@ class ForemanDistributed final : public ForemanBase {
                                   const std::size_t next_shiftboss_index_to_schedule,
                                   std::size_t *shiftboss_index_for_hash_join);
 
-  bool isLipRelatedWorkOrder(const serialization::WorkOrderMessage &proto,
+  bool isLipRelatedWorkOrder(serialization::WorkOrderMessage &proto,  // NOTE: no const here because we might change it
                              const std::size_t next_shiftboss_index_to_schedule,
                              std::size_t *shiftboss_index_for_lip);
 
@@ -141,6 +142,12 @@ class ForemanDistributed final : public ForemanBase {
   // Used for '\analyze'.
   DataExchangerAsync data_exchanger_;
   std::unique_ptr<StorageManager> storage_manager_;
+
+  // lip filter info, query_id -> lip_id -> lip
+  std::unordered_map<std::size_t, std::unordered_map<QueryContext::lip_filter_id, serialization::LIPFilter> > lip_infos_;
+
+  // Message queue
+  std::queue<AnnotatedMessage> queuedMessages;
 
   DISALLOW_COPY_AND_ASSIGN(ForemanDistributed);
 };

@@ -117,6 +117,9 @@ enum QueryExecutionMessageType : message_type_id {
   kBlockDomainRegistrationMessage,  // From Worker to BlockLocator.
   kBlockDomainRegistrationResponseMessage,  // From BlockLocator to Worker.
   kBlockDomainToShiftbossIndexMessage,  // From StorageManager to BlockLocator.
+  kInformLIPFilterLocalityMessage,
+  kRequestLIPFilterMessage,
+  kRespondLIPFilterRequestMessage,
   kAddBlockLocationMessage,  // From StorageManager to BlockLocator.
   kDeleteBlockLocationMessage,  // From StorageManager to BlockLocator.
   kGetAllDomainNetworkAddressesMessage,  // From StorageManager to BlockLocator.

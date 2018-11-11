@@ -79,6 +79,18 @@ void BlockLocator::run() {
         }
         break;
       }
+      // case kInformLIPFilterLocalityMessage: {
+      //   serialization::InformLIPFilterLocalityMessage proto;
+      //   CHECK(proto.ParseFromArray(tagged_message.message(), tagged_message.message_bytes()));
+      //
+      //   {
+      //     // Lock 'block_domain_to_shiftboss_index_shared_mutex_' as briefly as
+      //     // possible to insert an entry for the new Shiftboss index.
+      //     SpinSharedMutexExclusiveLock<false> write_lock(block_domain_to_shiftboss_index_shared_mutex_);
+      //     block_domain_to_shiftboss_index_.emplace(proto.block_domain(), proto.shiftboss_index());
+      //   }
+      //   break;
+      // }
       case kAddBlockLocationMessage: {
         serialization::BlockLocationMessage proto;
         CHECK(proto.ParseFromArray(tagged_message.message(), tagged_message.message_bytes()));

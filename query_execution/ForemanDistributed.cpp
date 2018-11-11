@@ -27,6 +27,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <string>
 
 #include "catalog/Catalog.pb.h"
 #include "catalog/CatalogDatabase.hpp"
@@ -92,6 +93,7 @@ ForemanDistributed::ForemanDistributed(
       kQueryTeardownMessage,
       kQueryExecutionSuccessMessage,
       kCommandResponseMessage,
+      kRequestLIPFilterMessage,
       kPoisonMessage};
 
   for (const auto message_type : sender_message_types) {
@@ -109,6 +111,7 @@ ForemanDistributed::ForemanDistributed(
       kWorkOrderCompleteMessage,
       kRebuildWorkOrderCompleteMessage,
       kWorkOrderFeedbackMessage,
+      kRespondLIPFilterRequestMessage,
       kPoisonMessage};
 
   for (const auto message_type : receiver_message_types) {
@@ -151,8 +154,14 @@ void ForemanDistributed::run() {
   // Event loop
   for (;;) {
     // Receive() causes this thread to sleep until next message is received.
-    const AnnotatedMessage annotated_message =
-        bus_->Receive(foreman_client_id_, 0, true);
+    AnnotatedMessage annotated_message;
+    if(queuedMessages.empty()){
+      annotated_message = bus_->Receive(foreman_client_id_, 0, true);
+    }
+    else {
+      annotated_message = queuedMessages.front();
+      queuedMessages.pop();
+    }
     const TaggedMessage &tagged_message = annotated_message.tagged_message;
     const tmb::message_type_id message_type = tagged_message.message_type();
     DLOG(INFO) << "ForemanDistributed received " << QueryExecutionUtil::MessageTypeToString(message_type)
@@ -321,7 +330,7 @@ bool ForemanDistributed::isHashJoinRelatedWorkOrder(const S::WorkOrderMessage &p
   return true;
 }
 
-bool ForemanDistributed::isLipRelatedWorkOrder(const S::WorkOrderMessage &proto,
+bool ForemanDistributed::isLipRelatedWorkOrder(S::WorkOrderMessage &proto,
                                                const size_t next_shiftboss_index_to_schedule,
                                                size_t *shiftboss_index_for_lip) {
   const S::WorkOrder &work_order_proto = proto.work_order();
@@ -330,27 +339,102 @@ bool ForemanDistributed::isLipRelatedWorkOrder(const S::WorkOrderMessage &proto,
   block_id block = kInvalidBlockId;
 
   switch (work_order_proto.work_order_type()) {
-    case S::BUILD_LIP_FILTER:
+    case S::BUILD_LIP_FILTER:{
       for (int i = 0; i < work_order_proto.ExtensionSize(S::BuildLIPFilterWorkOrder::lip_filter_indexes); ++i) {
         lip_filter_indexes.push_back(work_order_proto.GetExtension(S::BuildLIPFilterWorkOrder::lip_filter_indexes, i));
       }
       part_id = work_order_proto.GetExtension(S::BuildLIPFilterWorkOrder::partition_id);
       block = work_order_proto.GetExtension(S::BuildLIPFilterWorkOrder::build_block_id);
+
+      static_cast<PolicyEnforcerDistributed*>(policy_enforcer_.get())->getShiftbossIndexForBuildingLip(
+          proto.query_id(), lip_filter_indexes, part_id, block_locator_, block, next_shiftboss_index_to_schedule,
+          shiftboss_index_for_lip);
       break;
-    case S::SELECT:
+    }
+
+
+    case S::SELECT:{
       for (int i = 0; i < work_order_proto.ExtensionSize(S::SelectWorkOrder::lip_filter_indexes); ++i) {
         lip_filter_indexes.push_back(work_order_proto.GetExtension(S::SelectWorkOrder::lip_filter_indexes, i));
       }
       part_id = work_order_proto.GetExtension(S::SelectWorkOrder::partition_id);
       block = work_order_proto.GetExtension(S::SelectWorkOrder::block_id);
+
+
+      auto policy_enforcer = static_cast<PolicyEnforcerDistributed*>(policy_enforcer_.get());
+      for(QueryContext::lip_filter_id lip_filter_index : lip_filter_indexes){
+        if(lip_infos_.find(proto.query_id()) == lip_infos_.end() ||
+            lip_infos_[proto.query_id()].find(lip_filter_index) == lip_infos_[proto.query_id()].end()){
+
+          std::vector<std::size_t> shiftboss_ids = policy_enforcer->getShiftbossIndexesForLipResidence(proto.query_id(), lip_filter_index);
+
+          for(auto shiftboss_id : shiftboss_ids){
+            serialization::RequestLIPFilterMessage requestProto;
+            requestProto.set_query_id(proto.query_id());
+            requestProto.set_lip_filter_id(lip_filter_index);
+            const int proto_length = requestProto.ByteSize();
+            char *proto_bytes = static_cast<char*>(malloc(proto_length));
+            CHECK(requestProto.SerializeToArray(proto_bytes, proto_length));
+            TaggedMessage message(static_cast<const void*>(proto_bytes),
+                                  proto_length,
+                                  kRequestLIPFilterMessage);
+            free(proto_bytes);
+            DLOG(INFO) << "Requesting LIPFilter" << lip_filter_index << "From" << shiftboss_id;
+            CHECK(MessageBus::SendStatus::kOK ==
+              QueryExecutionUtil::SendTMBMessage(bus_,
+                                                 foreman_client_id_,
+                                                 shiftboss_directory_.getClientId(shiftboss_id),
+                                                 move(message)));
+            // Receive and merge lip filter
+            const AnnotatedMessage annotated_message = bus_->Receive(foreman_client_id_, 0, true);
+            const TaggedMessage &tagged_message = annotated_message.tagged_message;
+            const tmb::message_type_id message_type = tagged_message.message_type();
+            switch (message_type) {
+              case kRespondLIPFilterRequestMessage: {
+                S::RespondLIPFilterRequestMessage proto;
+                CHECK(proto.ParseFromArray(tagged_message.message(), tagged_message.message_bytes()));
+                std::size_t query_id = proto.query_id();
+                QueryContext::lip_filter_id lip_id = proto.lip_filter().lip_filter_id();
+                if(lip_infos_.find(proto.query_id()) != lip_infos_.end() &&
+                lip_infos_[proto.query_id()].find(lip_filter_index) != lip_infos_[proto.query_id()].end()){
+                  // MERGE THE FILTERS!!!!! should be good, need to test
+                  std::string originalFilter = lip_infos_[query_id][lip_id].actual_filter();
+                  std::string incomingFilter = proto.lip_filter().actual_filter();
+                  std::string newFilter;
+                  for(std::size_t itr = 0; itr < originalFilter.size(); itr++){
+                    newFilter += originalFilter[itr] | incomingFilter[itr];
+                  }
+                  lip_infos_[query_id][lip_id].set_actual_filter(newFilter);
+                }
+                else{
+                  lip_infos_[query_id][lip_id] = proto.lip_filter();
+                }
+                break;
+              }
+              default: {
+                // Push incoming messages into queue if it has nothing to do with lip response
+                queuedMessages.push(annotated_message);
+              }
+            }
+          }
+        }
+
+        // proto.add_lip_filters(lip_infos_[proto.query_id()][lip_filter_index]);
+        // proto.clear_lip_filters();
+        S::LIPFilter* lip_to_write = proto.add_lip_filters();
+        *lip_to_write = lip_infos_[proto.query_id()][lip_filter_index];
+      }
+      static_cast<PolicyEnforcerDistributed*>(policy_enforcer_.get())->getShiftbossIndexForProbingLip(
+          proto.query_id(), lip_filter_indexes, part_id, block_locator_, block, next_shiftboss_index_to_schedule,
+          shiftboss_index_for_lip);
+      return true;
       break;
+    }
     default:
       return false;
   }
 
-  static_cast<PolicyEnforcerDistributed*>(policy_enforcer_.get())->getShiftbossIndexForLip(
-      proto.query_id(), lip_filter_indexes, part_id, block_locator_, block, next_shiftboss_index_to_schedule,
-      shiftboss_index_for_lip);
+
 
   return true;
 }
@@ -386,9 +470,9 @@ void ForemanDistributed::dispatchWorkOrderMessages(const vector<unique_ptr<S::Wo
   static size_t shiftboss_index = kDefaultShiftbossIndex;
 
   PolicyEnforcerDistributed* policy_enforcer_dist = static_cast<PolicyEnforcerDistributed*>(policy_enforcer_.get());
-  for (const auto &message : messages) {
+  for (auto &message : messages) {
     DCHECK(message != nullptr);
-    const S::WorkOrderMessage &proto = *message;
+    S::WorkOrderMessage &proto = *message;
     const S::WorkOrder &work_order_proto = proto.work_order();
     size_t shiftboss_index_for_particular_work_order_type;
     if (policy_enforcer_dist->isSingleNodeQuery(proto.query_id())) {

@@ -76,4 +76,6 @@ message QueryContext {
   repeated uint64 num_partitions_for_nested_loops_joins = 14;
 
   optional uint64 num_partitions_for_lips = 15 [default = 1];
+
+  optional bytes conductor_ip = 16;
 }

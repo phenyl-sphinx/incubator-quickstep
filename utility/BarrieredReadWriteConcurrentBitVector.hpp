@@ -26,6 +26,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <limits>
+#include <string>
 
 #include "utility/BitManipulation.hpp"
 #include "utility/Macros.hpp"
@@ -86,6 +87,16 @@ class BarrieredReadWriteConcurrentBitVector {
     clear();
   }
 
+  explicit BarrieredReadWriteConcurrentBitVector(const std::size_t num_bits, std::string content)
+      : owned_(true),
+        num_bits_(num_bits),
+        data_array_(static_cast<DataType *>(std::malloc(BytesNeeded(num_bits)))),
+        data_array_size_((num_bits >> kHigherOrderShift) + (num_bits & kLowerOrderMask ? 1 : 0)) {
+    DCHECK_GT(num_bits, 0u);
+    clear();
+    std::memcpy((void *)data_array_, content.c_str(), BytesNeeded(num_bits));
+  }
+
   /**
    * @brief Destructor. Frees any owned memory.
    */
@@ -122,6 +133,10 @@ class BarrieredReadWriteConcurrentBitVector {
    **/
   inline void clear() {
     std::memset(data_array_, 0, BytesNeeded(num_bits_));
+  }
+
+  std::string getAll() const {
+    return std::string((const char *)data_array_, BytesNeeded(num_bits_));
   }
 
   /**
@@ -255,7 +270,6 @@ class BarrieredReadWriteConcurrentBitVector {
     }
   }
 
- private:
   typedef std::atomic<std::size_t> DataType;
   static constexpr std::size_t kDataSize = sizeof(DataType);
 
