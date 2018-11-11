@@ -40,6 +40,9 @@ message BitVectorExactFilter {
     optional int64 max_value = 17;
     optional uint64 attribute_size = 18;
     optional bool is_anti_filter = 19;
+
+    optional uint64 num_bits = 20;
+    optional bytes actual_filter = 21;
   }
 }
 
@@ -48,6 +51,9 @@ message SingleIdentityHashFilter {
     // All required
     optional uint64 filter_cardinality = 24;
     optional uint64 attribute_size = 25;
+
+    optional uint64 num_bits = 26;
+    optional bytes actual_filter = 27;
   }
 }
 

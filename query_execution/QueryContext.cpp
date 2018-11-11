@@ -321,4 +321,9 @@ void QueryContext::getTempRelationIDs(
   }
 }
 
+const LIPFilter* QueryContext::getLIPFilter(const lip_filter_id id) const {
+  DCHECK_LT(id, lip_filters_.size());
+  return lip_filters_[id].get();
+}
+
 }  // namespace quickstep

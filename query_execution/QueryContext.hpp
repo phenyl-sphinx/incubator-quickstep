@@ -382,10 +382,7 @@ class QueryContext {
    * @return The constant pointer to LIPFilter that is
    *         already created in the constructor.
    **/
-  inline const LIPFilter* getLIPFilter(const lip_filter_id id) const {
-    DCHECK_LT(id, lip_filters_.size());
-    return lip_filters_[id].get();
-  }
+  inline const LIPFilter* getLIPFilter(const lip_filter_id id) const;
 
   /**
    * @brief Destory the given LIPFilter.
