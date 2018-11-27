@@ -20,6 +20,7 @@ syntax = "proto2";
 package quickstep.serialization;
 
 import "relational_operators/SortMergeRunOperator.proto";
+import "utility/lip_filter/LIPFilter.proto";
 
 // Next tag: 27.
 enum WorkOrderType {

@@ -26,6 +26,7 @@
 #include "catalog/CatalogTypedefs.hpp"
 #include "storage/StorageBlockInfo.hpp"
 #include "utility/Macros.hpp"
+#include "utility/BarrieredReadWriteConcurrentBitVector.hpp"
 
 namespace quickstep {
 
@@ -57,6 +58,10 @@ class LIPFilter {
   LIPFilterType getType() const {
     return type_;
   }
+
+  // virtual void setInMemoryVector(BarrieredReadWriteConcurrentBitVector bit_vector);
+
+  virtual const BarrieredReadWriteConcurrentBitVector& getInMemoryVector() const = 0;
 
   /**
    * @brief Insert the values drawn from a ValueAccessor into this LIPFilter.

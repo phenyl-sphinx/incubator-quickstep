@@ -159,6 +159,26 @@ class BuildLIPFilterOperator : public RelationalOperator {
  **/
 class BuildLIPFilterWorkOrder : public WorkOrder {
  public:
+#ifdef ENABLE_DISTRIBUTED
+   BuildLIPFilterWorkOrder(const std::size_t query_id,
+                           const CatalogRelationSchema &input_relation,
+                           const partition_id part_id,
+                           const block_id build_block_id,
+                           const Predicate *build_side_predicate,
+                           StorageManager *storage_manager,
+                           LIPFilterAdaptiveProber *lip_filter_adaptive_prober,
+                           LIPFilterBuilder *lip_filter_builder,
+                           std::vector<std::size_t> lip_filter_ids)
+       : WorkOrder(query_id, part_id),
+         input_relation_(input_relation),
+         build_block_id_(build_block_id),
+         build_side_predicate_(build_side_predicate),
+         storage_manager_(DCHECK_NOTNULL(storage_manager)),
+         lip_filter_adaptive_prober_(lip_filter_adaptive_prober),
+         lip_filter_builder_(DCHECK_NOTNULL(lip_filter_builder)),
+         lip_filter_ids_(lip_filter_ids) {}
+#endif
+
   /**
    * @brief Constructor.
    *
@@ -209,6 +229,9 @@ class BuildLIPFilterWorkOrder : public WorkOrder {
 
   std::unique_ptr<LIPFilterAdaptiveProber> lip_filter_adaptive_prober_;
   std::unique_ptr<LIPFilterBuilder> lip_filter_builder_;
+#ifdef ENABLE_DISTRIBUTED
+  std::vector<std::size_t> lip_filter_ids_;
+#endif
 
   DISALLOW_COPY_AND_ASSIGN(BuildLIPFilterWorkOrder);
 };

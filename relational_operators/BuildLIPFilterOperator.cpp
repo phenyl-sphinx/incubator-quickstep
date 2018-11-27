@@ -169,6 +169,11 @@ void BuildLIPFilterWorkOrder::execute() {
   } else {
     lip_filter_builder_->insertValueAccessor(accessor.get());
   }
+
+#ifdef ENABLE_DISTRIBUTED
+  storage_manager_->ReportLIPFilterExistence(lip_filter_ids_);
+#endif
+
 }
 
 }  // namespace quickstep

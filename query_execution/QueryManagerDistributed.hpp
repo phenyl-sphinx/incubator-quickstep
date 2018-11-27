@@ -25,6 +25,7 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <set>
 
 #include "catalog/CatalogTypedefs.hpp"
 #include "query_execution/BlockLocator.hpp"
@@ -211,6 +212,43 @@ class QueryManagerDistributed final : public QueryManagerBase {
     }
   }
 
+  void getShiftbossIndexForBuildingLip(const std::vector<QueryContext::lip_filter_id> &lip_filter_indexes,
+                               const partition_id part_id,
+                               const BlockLocator &block_locator,
+                               const block_id block,
+                               const std::size_t next_shiftboss_index_to_schedule,
+                               std::size_t *shiftboss_index) {
+    if (!block_locator.getBlockLocalityInfo(block, shiftboss_index)) {
+      *shiftboss_index = next_shiftboss_index_to_schedule;
+    }
+
+    for(QueryContext::lip_filter_id lip_id : lip_filter_indexes){
+      if(shiftboss_indexes_for_lip_filter_.find(lip_id) != shiftboss_indexes_for_lip_filter_.end()){
+        shiftboss_indexes_for_lip_filter_[lip_id].push_back(*shiftboss_index);
+      }
+      else{
+        shiftboss_indexes_for_lip_filter_[lip_id] = std::vector<std::size_t>();
+        shiftboss_indexes_for_lip_filter_[lip_id].push_back(*shiftboss_index);
+      }
+    }
+  }
+
+  void getShiftbossIndexForProbingLip(const std::vector<QueryContext::lip_filter_id> &lip_filter_indexes,
+                               const partition_id part_id,
+                               const BlockLocator &block_locator,
+                               const block_id block,
+                               const std::size_t next_shiftboss_index_to_schedule,
+                               std::size_t *shiftboss_index) {
+    if (!block_locator.getBlockLocalityInfo(block, shiftboss_index)) {
+      *shiftboss_index = next_shiftboss_index_to_schedule;
+    }
+  }
+
+  std::vector<std::size_t> getShiftbossIndexesForLipResidence(
+      const QueryContext::lip_filter_id lip_filter_index) {
+    return shiftboss_indexes_for_lip_filter_[lip_filter_index];
+  }
+
   /**
    * @brief Get or set the index of Shiftboss for a NestedLoopsJoin related WorkOrder.
    * If it is the first join on <nested_loops_join_index, part_id>,
@@ -294,6 +332,9 @@ class QueryManagerDistributed final : public QueryManagerBase {
 
   // From a LipFilterGroupIndex to its scheduled Shiftboss index.
   std::unordered_map<LipFilterGroupIndex, std::vector<std::size_t>> shiftboss_indexes_for_lip_filter_groups_;
+
+  // From LIPFilterId to shiftbosses that hold it
+  std::unordered_map<QueryContext::lip_filter_id, std::vector<std::size_t>> shiftboss_indexes_for_lip_filter_;
 
   DISALLOW_COPY_AND_ASSIGN(QueryManagerDistributed);
 };

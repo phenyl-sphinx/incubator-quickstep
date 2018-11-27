@@ -69,6 +69,18 @@ class BitVectorExactFilter : public LIPFilter {
     DCHECK_GE(max_value_, min_value_);
   }
 
+  explicit BitVectorExactFilter(const std::int64_t min_value,
+                                const std::int64_t max_value,
+                                std::string content)
+      : LIPFilter(LIPFilterType::kBitVectorExactFilter),
+        min_value_(static_cast<CppType>(min_value)),
+        max_value_(static_cast<CppType>(max_value)),
+        bit_vector_(max_value - min_value + 1, content) {
+    DCHECK_EQ(min_value, static_cast<std::int64_t>(min_value_));
+    DCHECK_EQ(max_value, static_cast<std::int64_t>(max_value_));
+    DCHECK_GE(max_value_, min_value_);
+  }
+
   ~BitVectorExactFilter() override {};
 
   void insertValueAccessor(ValueAccessor *accessor,
@@ -102,6 +114,10 @@ class BitVectorExactFilter : public LIPFilter {
         return this->filterBatchInternal<false>(accessor, attr_id, batch, batch_size);
       }
     });
+  }
+
+  const BarrieredReadWriteConcurrentBitVector& getInMemoryVector() const {
+    return bit_vector_;
   }
 
  private:

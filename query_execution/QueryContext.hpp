@@ -374,6 +374,10 @@ class QueryContext {
     return lip_filters_[id].get();
   }
 
+  void setLipFilter(lip_filter_id id, LIPFilter* filter) {
+    lip_filters_[id].reset(filter);
+  }
+
   /**
    * @brief Get a constant pointer to the LIPFilter.
    *

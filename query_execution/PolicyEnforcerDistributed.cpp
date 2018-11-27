@@ -247,6 +247,49 @@ void PolicyEnforcerDistributed::getShiftbossIndexForLip(
                                          shiftboss_index);
 }
 
+void PolicyEnforcerDistributed::getShiftbossIndexForBuildingLip(
+    const std::size_t query_id,
+    const std::vector<QueryContext::lip_filter_id> &lip_filter_indexes,
+    const partition_id part_id,
+    const BlockLocator &block_locator,
+    const block_id block,
+    const std::size_t next_shiftboss_index_to_schedule,
+    std::size_t *shiftboss_index) {
+  DCHECK(admitted_queries_.find(query_id) != admitted_queries_.end());
+  QueryManagerDistributed *query_manager = static_cast<QueryManagerDistributed*>(admitted_queries_[query_id].get());
+  query_manager->getShiftbossIndexForBuildingLip(lip_filter_indexes,
+                                         part_id,
+                                         block_locator,
+                                         block,
+                                         next_shiftboss_index_to_schedule,
+                                         shiftboss_index);
+}
+
+void PolicyEnforcerDistributed::getShiftbossIndexForProbingLip(
+    const std::size_t query_id,
+    const std::vector<QueryContext::lip_filter_id> &lip_filter_indexes,
+    const partition_id part_id,
+    const BlockLocator &block_locator,
+    const block_id block,
+    const std::size_t next_shiftboss_index_to_schedule,
+    std::size_t *shiftboss_index) {
+  DCHECK(admitted_queries_.find(query_id) != admitted_queries_.end());
+  QueryManagerDistributed *query_manager = static_cast<QueryManagerDistributed*>(admitted_queries_[query_id].get());
+  query_manager->getShiftbossIndexForProbingLip(lip_filter_indexes,
+                                         part_id,
+                                         block_locator,
+                                         block,
+                                         next_shiftboss_index_to_schedule,
+                                         shiftboss_index);
+}
+
+std::vector<std::size_t> PolicyEnforcerDistributed::getShiftbossIndexesForLipResidence(
+    const std::size_t query_id,
+    const QueryContext::lip_filter_id lip_filter_index) {
+  QueryManagerDistributed *query_manager = static_cast<QueryManagerDistributed*>(admitted_queries_[query_id].get());
+  query_manager->getShiftbossIndexesForLipResidence(lip_filter_index);
+}
+
 void PolicyEnforcerDistributed::getShiftbossIndexForNestedLoopsJoin(
     const std::size_t query_id,
     const std::size_t nested_loops_join_index,

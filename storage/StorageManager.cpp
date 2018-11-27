@@ -229,6 +229,7 @@ StorageManager::StorageManager(
   if (bus_) {
     storage_manager_client_id_ = bus_->Connect();
 
+    bus_->RegisterClientAsSender(storage_manager_client_id_, kInformLIPFilterLocalityMessage);
     bus_->RegisterClientAsSender(storage_manager_client_id_, kBlockDomainToShiftbossIndexMessage);
 
     bus_->RegisterClientAsSender(storage_manager_client_id_, kAddBlockLocationMessage);
@@ -474,6 +475,37 @@ block_id StorageManager::allocateNewBlockOrBlob(const std::size_t num_slots,
 }
 
 #ifdef QUICKSTEP_DISTRIBUTED
+
+
+// NOTE: not used currently
+// void StorageManager::ReportLIPFilterExistence(const std::vector<std::size_t> &lip_filter_ids) {
+//   serialization::InformLIPFilterLocalityMessage proto;
+//   for(std::size_t lip_filter_id : lip_filter_ids){
+//     proto.AddExtension(serialization::InformLIPFilterLocalityMessage::lip_filter_ids, lip_filter_id);
+//   }
+//
+//   const int proto_length = proto.ByteSize();
+//   char *proto_bytes = static_cast<char*>(malloc(proto_length));
+//   CHECK(proto.SerializeToArray(proto_bytes, proto_length));
+//
+//   TaggedMessage message(static_cast<const void*>(proto_bytes),
+//                         proto_length,
+//                         kInformLIPFilterLocalityMessage);
+//   free(proto_bytes);
+//
+//   DLOG(INFO) << "StorageManager with Shiftboss Client " << shiftboss_tmb_client_id_
+//              << " sent InformLIPFilterLocalityMessage to BlockLocator";
+//
+//   DCHECK_NE(block_locator_client_id_, tmb::kClientIdNone);
+//   DCHECK(bus_ != nullptr);
+//   CHECK(MessageBus::SendStatus::kOK ==
+//       QueryExecutionUtil::SendTMBMessage(bus_,
+//                                          shiftboss_tmb_client_id_,
+//                                          block_locator_client_id_,
+//                                          move(message)));
+// }
+
+
 void StorageManager::sendBlockDomainToShiftbossIndexMessage(const std::size_t shiftboss_index) {
   serialization::BlockDomainToShiftbossIndexMessage proto;
   proto.set_block_domain(block_domain_);

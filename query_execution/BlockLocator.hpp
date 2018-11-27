@@ -70,6 +70,7 @@ class BlockLocator : public Thread {
     bus_->RegisterClientAsSender(locator_client_id_, kBlockDomainRegistrationResponseMessage);
 
     bus_->RegisterClientAsReceiver(locator_client_id_, kBlockDomainToShiftbossIndexMessage);
+    // bus_->RegisteClientAsReceiver(locator_client_id_, kInformLIPFilterLocalityMessage);
 
     bus_->RegisterClientAsReceiver(locator_client_id_, kAddBlockLocationMessage);
     bus_->RegisterClientAsReceiver(locator_client_id_, kDeleteBlockLocationMessage);

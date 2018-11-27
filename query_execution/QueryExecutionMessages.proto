@@ -22,6 +22,7 @@ package quickstep.serialization;
 import "catalog/Catalog.proto";
 import "query_execution/QueryContext.proto";
 import "relational_operators/WorkOrder.proto";
+import "utility/lip_filter/LIPFilter.proto";
 
 // Note: There are different types of completion messages for normal work orders
 // rebuild work orders. This can be potentially helpful when we want to collect
@@ -102,6 +103,7 @@ message WorkOrderMessage {
   required uint64 query_id = 1;
   required uint64 operator_index = 2;
   required WorkOrder work_order = 3;
+  repeated LIPFilter lip_filters = 4;
 }
 
 message InitiateRebuildMessage {
@@ -153,6 +155,22 @@ message BlockDomainMessage {
 message BlockDomainToShiftbossIndexMessage {
   required uint32 block_domain = 1;
   required uint64 shiftboss_index = 2;
+}
+
+// Used for informing the conductor about the existence of some lip filter.
+message InformLIPFilterLocalityMessage {
+  repeated uint64 lip_filter_ids = 1;
+}
+
+// Used for Foreman to request lip filter from shiftboss
+message RequestLIPFilterMessage {
+  required uint32 query_id = 1;
+  required uint64 lip_filter_id = 2;
+}
+
+message RespondLIPFilterRequestMessage {
+  required uint32 query_id = 1;
+  required LIPFilter lip_filter = 2;
 }
 
 // Used when StorageManager loads or evicts a block or a blob from its buffer

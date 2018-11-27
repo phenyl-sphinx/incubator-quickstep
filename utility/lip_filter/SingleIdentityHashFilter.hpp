@@ -66,6 +66,13 @@ class SingleIdentityHashFilter : public LIPFilter {
     DCHECK_GE(filter_cardinality, 1u);
   }
 
+  explicit SingleIdentityHashFilter(const std::size_t filter_cardinality, std::string content)
+      : LIPFilter(LIPFilterType::kSingleIdentityHashFilter),
+        filter_cardinality_(filter_cardinality),
+        bit_vector_(filter_cardinality, content) {
+    DCHECK_GE(filter_cardinality, 1u);
+  }
+
   ~SingleIdentityHashFilter() override {};
 
   void insertValueAccessor(ValueAccessor *accessor,
@@ -99,6 +106,10 @@ class SingleIdentityHashFilter : public LIPFilter {
         return this->filterBatchInternal<false>(accessor, attr_id, batch, batch_size);
       }
     });
+  }
+
+  const BarrieredReadWriteConcurrentBitVector& getInMemoryVector() const {
+    return bit_vector_;
   }
 
  private:
