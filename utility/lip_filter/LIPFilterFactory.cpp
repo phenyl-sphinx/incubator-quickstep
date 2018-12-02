@@ -31,10 +31,10 @@
 namespace quickstep {
 
 LIPFilter* LIPFilterFactory::ReconstructFromProto(const serialization::LIPFilter &proto) {
-  std::string filter_content;
-  if(proto.has_actual_filter()){
-    filter_content = proto.actual_filter();
-  }
+  // std::string filter_content;
+  // if(proto.has_actual_filter()){
+  //   filter_content = proto.actual_filter();
+  // }
   switch (proto.lip_filter_type()) {
     case serialization::LIPFilterType::BIT_VECTOR_EXACT_FILTER: {
       const std::size_t attr_size =
@@ -49,27 +49,27 @@ LIPFilter* LIPFilterFactory::ReconstructFromProto(const serialization::LIPFilter
       switch (attr_size) {
         case 1:
           if (is_anti_filter) {
-            return new BitVectorExactFilter<std::int8_t, true>(min_value, max_value, filter_content);
+            return new BitVectorExactFilter<std::int8_t, true>(min_value, max_value);
           } else {
-            return new BitVectorExactFilter<std::int8_t, false>(min_value, max_value, filter_content);
+            return new BitVectorExactFilter<std::int8_t, false>(min_value, max_value);
           }
         case 2:
           if (is_anti_filter) {
-            return new BitVectorExactFilter<std::int16_t, true>(min_value, max_value, filter_content);
+            return new BitVectorExactFilter<std::int16_t, true>(min_value, max_value);
           } else {
-            return new BitVectorExactFilter<std::int16_t, false>(min_value, max_value, filter_content);
+            return new BitVectorExactFilter<std::int16_t, false>(min_value, max_value);
           }
         case 4:
           if (is_anti_filter) {
-            return new BitVectorExactFilter<std::int32_t, true>(min_value, max_value, filter_content);
+            return new BitVectorExactFilter<std::int32_t, true>(min_value, max_value);
           } else {
-            return new BitVectorExactFilter<std::int32_t, false>(min_value, max_value, filter_content);
+            return new BitVectorExactFilter<std::int32_t, false>(min_value, max_value);
           }
         case 8:
           if (is_anti_filter) {
-            return new BitVectorExactFilter<std::int64_t, true>(min_value, max_value, filter_content);
+            return new BitVectorExactFilter<std::int64_t, true>(min_value, max_value);
           } else {
-            return new BitVectorExactFilter<std::int64_t, false>(min_value, max_value, filter_content);
+            return new BitVectorExactFilter<std::int64_t, false>(min_value, max_value);
           }
         default:
           LOG(FATAL) << "Invalid attribute size for BitVectorExactFilter: "
@@ -83,13 +83,13 @@ LIPFilter* LIPFilterFactory::ReconstructFromProto(const serialization::LIPFilter
           proto.GetExtension(serialization::SingleIdentityHashFilter::filter_cardinality);
 
       if (attr_size >= 8) {
-        return new SingleIdentityHashFilter<std::uint64_t>(filter_cardinality, filter_content);
+        return new SingleIdentityHashFilter<std::uint64_t>(filter_cardinality);
       } else if (attr_size >= 4) {
-        return new SingleIdentityHashFilter<std::uint32_t>(filter_cardinality, filter_content);
+        return new SingleIdentityHashFilter<std::uint32_t>(filter_cardinality);
       } else if (attr_size >= 2) {
-        return new SingleIdentityHashFilter<std::uint16_t>(filter_cardinality, filter_content);
+        return new SingleIdentityHashFilter<std::uint16_t>(filter_cardinality);
       } else {
-        return new SingleIdentityHashFilter<std::uint8_t>(filter_cardinality, filter_content);
+        return new SingleIdentityHashFilter<std::uint8_t>(filter_cardinality);
       }
     }
     // TODO(jianqiao): handle the BLOOM_FILTER and EXACT_FILTER implementations.

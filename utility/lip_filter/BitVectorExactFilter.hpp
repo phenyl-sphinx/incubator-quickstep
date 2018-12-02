@@ -120,6 +120,10 @@ class BitVectorExactFilter : public LIPFilter {
     return bit_vector_;
   }
 
+  BarrieredReadWriteConcurrentBitVector& getInMemoryVectorMutable() {
+    return bit_vector_;
+  }
+
  private:
   /**
    * @brief Iterate through the accessor and hash values into the internal bit

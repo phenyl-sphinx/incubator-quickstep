@@ -128,7 +128,7 @@ class QueryManagerDistributed final : public QueryManagerBase {
       return;
     }
 
-    getShiftbossIndexForLip(lip_filter_indexes, part_id, block_locator, block, next_shiftboss_index_to_schedule,
+    getShiftbossIndexForBuildingLip(lip_filter_indexes, part_id, block_locator, block, next_shiftboss_index_to_schedule,
                             shiftboss_index);
 
     shiftboss_indexes_for_aggrs_[aggr_state_index][part_id] = *shiftboss_index;
@@ -162,7 +162,7 @@ class QueryManagerDistributed final : public QueryManagerBase {
       return;
     }
 
-    getShiftbossIndexForLip(lip_filter_indexes, part_id, block_locator, block, next_shiftboss_index_to_schedule,
+    getShiftbossIndexForBuildingLip(lip_filter_indexes, part_id, block_locator, block, next_shiftboss_index_to_schedule,
                             shiftboss_index);
 
     shiftboss_indexes_for_hash_joins_[join_hash_table_index][part_id] = *shiftboss_index;

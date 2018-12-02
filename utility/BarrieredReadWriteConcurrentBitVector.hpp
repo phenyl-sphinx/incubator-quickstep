@@ -286,7 +286,7 @@ class BarrieredReadWriteConcurrentBitVector {
   DataType *data_array_;
   const std::size_t data_array_size_;
 
-  DISALLOW_COPY_AND_ASSIGN(BarrieredReadWriteConcurrentBitVector);
+  // DISALLOW_COPY_AND_ASSIGN(BarrieredReadWriteConcurrentBitVector);
 };
 
 /** @} */

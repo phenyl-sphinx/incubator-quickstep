@@ -63,6 +63,8 @@ class LIPFilter {
 
   virtual const BarrieredReadWriteConcurrentBitVector& getInMemoryVector() const = 0;
 
+  virtual BarrieredReadWriteConcurrentBitVector& getInMemoryVectorMutable() = 0;
+
   /**
    * @brief Insert the values drawn from a ValueAccessor into this LIPFilter.
    *

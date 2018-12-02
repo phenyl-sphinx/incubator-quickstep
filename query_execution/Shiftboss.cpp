@@ -199,10 +199,14 @@ void Shiftboss::run() {
             for(std::size_t itr = 0; itr < proto.lip_filters().size(); itr++){
               auto lip_proto = proto.lip_filters(itr);
               auto filter_id = lip_proto.lip_filter_id();
-              // NOTE: MAYBE WRONG HERE, try to inject the memory content rather than reconstruction if we see a segmentation fault
-              auto lip_filter = LIPFilterFactory::ReconstructFromProto(lip_proto);
-              auto query_id = proto.query_id();
-              query_contexts_[query_id]->setLipFilter(filter_id, lip_filter);
+
+              // auto lip_filter = LIPFilterFactory::ReconstructFromProto(lip_proto);
+              // auto query_id = proto.query_id();
+              // query_contexts_[query_id]->setLipFilter(filter_id, lip_filter);
+
+              auto lip_filter = query_contexts_[query_id]->getLIPFilterMutable(filter_id);
+              auto bit_vector = lip_filter->getInMemoryVectorMutable();
+              std::memcpy(static_cast<void *>(bit_vector.data_array_), lip_proto.actual_filter().c_str(), lip_proto.actual_filter().size());
             }
           }
 
@@ -273,29 +277,29 @@ void Shiftboss::run() {
 
           serialization::RespondLIPFilterRequestMessage res_proto;
           res_proto.set_query_id(proto.lip_filter_id());
-          auto lip_proto = res_proto.lip_filter();
+          auto lip_proto = res_proto.mutable_lip_filter();
           const LIPFilter *lip_filter = query_contexts_[proto.query_id()]->getLIPFilterMutable(proto.lip_filter_id());
           switch(lip_filter->getType()){
             case LIPFilterType::kBitVectorExactFilter:
-              lip_proto.set_lip_filter_type(serialization::LIPFilterType::BIT_VECTOR_EXACT_FILTER);
+              lip_proto->set_lip_filter_type(serialization::LIPFilterType::BIT_VECTOR_EXACT_FILTER);
               break;
             case LIPFilterType::kSingleIdentityHashFilter:
-              lip_proto.set_lip_filter_type(serialization::LIPFilterType::SINGLE_IDENTITY_HASH_FILTER);
+              lip_proto->set_lip_filter_type(serialization::LIPFilterType::SINGLE_IDENTITY_HASH_FILTER);
               break;
             default:
-              lip_proto.set_lip_filter_type(serialization::LIPFilterType::BLOOM_FILTER);
+              lip_proto->set_lip_filter_type(serialization::LIPFilterType::BLOOM_FILTER);
               break;
           }
-          lip_proto.set_num_bits(lip_filter->getInMemoryVector().num_bits_);
-          lip_proto.set_actual_filter(lip_filter->getInMemoryVector().getAll());
-          lip_proto.set_lip_filter_id(proto.lip_filter_id());
+          lip_proto->set_num_bits(lip_filter->getInMemoryVector().num_bits_);
+          lip_proto->set_actual_filter(lip_filter->getInMemoryVector().getAll());
+          lip_proto->set_lip_filter_id(proto.lip_filter_id());
 
           const int proto_length = res_proto.ByteSize();
           char *proto_bytes = static_cast<char*>(malloc(proto_length));
           CHECK(res_proto.SerializeToArray(proto_bytes, proto_length));
           TaggedMessage res_message(static_cast<const void*>(proto_bytes),
                                 proto_length,
-                                kRequestLIPFilterMessage);
+                                kRespondLIPFilterRequestMessage);
           free(proto_bytes);
           const MessageBus::SendStatus send_status =
               QueryExecutionUtil::SendTMBMessage(bus_global_,
@@ -303,7 +307,7 @@ void Shiftboss::run() {
                                                  foreman_client_id_,
                                                  move(res_message));
           CHECK(send_status == MessageBus::SendStatus::kOK);
-          return;
+          break;
         }
         default: {
           LOG(FATAL) << "Unknown TMB message type";

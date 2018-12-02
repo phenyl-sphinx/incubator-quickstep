@@ -287,7 +287,7 @@ std::vector<std::size_t> PolicyEnforcerDistributed::getShiftbossIndexesForLipRes
     const std::size_t query_id,
     const QueryContext::lip_filter_id lip_filter_index) {
   QueryManagerDistributed *query_manager = static_cast<QueryManagerDistributed*>(admitted_queries_[query_id].get());
-  query_manager->getShiftbossIndexesForLipResidence(lip_filter_index);
+  return query_manager->getShiftbossIndexesForLipResidence(lip_filter_index);
 }
 
 void PolicyEnforcerDistributed::getShiftbossIndexForNestedLoopsJoin(

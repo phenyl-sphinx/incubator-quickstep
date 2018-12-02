@@ -112,6 +112,10 @@ class SingleIdentityHashFilter : public LIPFilter {
     return bit_vector_;
   }
 
+  BarrieredReadWriteConcurrentBitVector& getInMemoryVectorMutable() {
+    return bit_vector_;
+  }
+
  private:
   /**
    * @brief Round up bit_size to multiples of 8.
