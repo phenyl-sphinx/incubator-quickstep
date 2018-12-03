@@ -194,19 +194,25 @@ void Shiftboss::run() {
 
           const std::size_t query_id = proto.query_id();
           DCHECK_EQ(1u, query_contexts_.count(query_id));
+          if(complete_lip_filters_.find(query_id) == complete_lip_filters_.end()){
+            complete_lip_filters_[query_id] = std::unordered_set<std::size_t>();
+          }
 
           if(proto.lip_filters().size() > 0){
             for(std::size_t itr = 0; itr < proto.lip_filters().size(); itr++){
               auto lip_proto = proto.lip_filters(itr);
               auto filter_id = lip_proto.lip_filter_id();
-
+              if(complete_lip_filters_[query_id].find(filter_id) != complete_lip_filters_[query_id].end()){
+                continue;
+              }
               // auto lip_filter = LIPFilterFactory::ReconstructFromProto(lip_proto);
               // auto query_id = proto.query_id();
               // query_contexts_[query_id]->setLipFilter(filter_id, lip_filter);
-
               auto lip_filter = query_contexts_[query_id]->getLIPFilterMutable(filter_id);
               auto bit_vector = lip_filter->getInMemoryVectorMutable();
               std::memcpy(static_cast<void *>(bit_vector.data_array_), lip_proto.actual_filter().c_str(), lip_proto.actual_filter().size());
+
+              complete_lip_filters_[query_id].insert(filter_id);
             }
           }
 

@@ -24,6 +24,7 @@
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "catalog/CatalogDatabaseCache.hpp"
 #include "catalog/CatalogTypedefs.hpp"
@@ -190,6 +191,8 @@ class Shiftboss : public Thread {
 
   // QueryContexts per query.
   std::unordered_map<std::size_t, std::unique_ptr<QueryContext>> query_contexts_;
+
+  std::unordered_map<std::size_t, std::unordered_set<std::size_t> > complete_lip_filters_; // from query_id to set of lip filters
 
   DISALLOW_COPY_AND_ASSIGN(Shiftboss);
 };
